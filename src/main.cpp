@@ -1,5 +1,7 @@
 // -*- mode:c++; indent-tabs-mode:nil; -*-
 
+#include "Recorder.hh"
+
 #include <zmq.hpp>
 
 #include <chrono>
@@ -14,6 +16,7 @@
 #include <cassert>
 #include <future>
 #include <unordered_map>
+#include <type_traits>
 
 namespace {
 
@@ -55,57 +58,10 @@ void apply(SockFunction const& function, zmq::socket_t* socket, char const* addr
 
 }}
 
-
-class Recorder
-{
-  uint32_t _object_key;
-
-  template<typename T>
-  struct RecordItem {
-    int64_t time;
-    T value;
-  };
-
- public:
-  Recorder() = delete;
-  Recorder(Recorder const&) = delete;
-  explicit Recorder(uint32_t object_key) : _object_key(object_key) {}
-  ~Recorder() {}
-
-  template<typename T>
-  void send(RecordItem<T> const& item) const {
-    std::cout << "rec:" << _object_key << " -- " << item.time << ":" << item.value << std::endl << std::flush;
-  }
-
-  template<typename T>
-  void record(int key, T const& value) const {
-    static std::unordered_map<int, RecordItem<T>> storage;
-    auto it = storage.find(key);
-    if (it == storage.end()) {
-      RecordItem<T> item = {std::clock(), value};
-      storage.emplace(key, item);
-      this->send(item);
-    } else if (it->second.value != value) {
-      // Set flank time
-      it->second.time = std::clock();
-      // Send old value, i.e. flank start value
-      this->send(it->second);
-      // Set new value
-      it->second.value = value;
-      // Send new value, i.e. flank end value
-      this->send(it->second);
-    } else {
-      // Ignore if value does not change
-    }
-  }
-};
-
-
 class Component
 {
   static zmq::context_t* context;
   static std::string socket_address;
-
 
  public:
   Component(uint32_t component_id)
@@ -137,8 +93,8 @@ class Component
       }
     }
 
-    _recorder->record(100, sum);
-    _recorder->record(101, sum);
+    // _recorder->record("rdr1", sum);
+    // _recorder->record("on/off", sum);
 
     snprintf(buf, sizeof(buf), "%03d:%03d -- %ld", _component_id, ++_iteration, sum);
     msg.rebuild(sizeof(buf));
@@ -178,7 +134,7 @@ void producer(zmq::context_t* ctx)
   std::srand(std::time(0));
 
   zmq::message_t msg;
-  for (int i=0; i<5; ++i) {
+  for (int i=0; i<3; ++i) {
     msg.rebuild(1024);
     snprintf(static_cast<char*>(msg.data()), msg.size(),
              "%s:%d ... abcdefghijklmnopqrstuvxyz ABCDEFGHIJKLMNOPQRSTUVXYZ",
@@ -242,7 +198,7 @@ main(int ac, char** av)
   Component c1(1);
   Component c2(2);
   std::function<void(Component*)> fcalc = &Component::calculate;
-  for (int i=0; i<20; ++i)
+  for (int i=0; i<3; ++i)
   {
     fcalc(&c1);
     fcalc(&c2);
@@ -250,26 +206,48 @@ main(int ac, char** av)
   running_consumer.store(false);
   th_consumer.join();
 
-  Recorder rec(99);
-  rec.record(100,1.0);
-  rec.record(100,1.0);
-  rec.record(100,1.1);
-  rec.record(100,1.1);
-  rec.record(100,1.2);
-  rec.record(100,1.2);
-  rec.record(100,1.2);
-  rec.record(100,1.2);
-  rec.record(100,1.2);
-  rec.record(100,1.2);
-  rec.record(100,1.2);
-  rec.record(100,1.2);
-  rec.record(100,1.2);
-  rec.record(100,1.2);
-  rec.record(100,1.0);
-  rec.record(100,1.0);
-  rec.record(100,1.0);
-  rec.record(100,1.0);
-  rec.record(100,1.0);
+  std::this_thread::sleep_for(msec(20));
+
+  Recorder rec1(100);
+  Recorder rec2(201);
+  rec1.setup("foo","m");
+  rec2.setup("foo","m/s");
+  rec2.setup("fiii","s");
+  rec1.record("foo",1.1);
+  rec1.record("foo",1.1);
+  rec2.record("fiii",9.9);
+  rec2.record("fiii",9.9);
+  rec2.record("foo",9.1);
+  rec2.record("foo",9.1);
+  rec1.record("foo",1.1);
+  rec1.record("foo",1.1);
+  rec1.record("foo",1.2);
+  rec1.record("foo",1.2);
+  rec1.record("foo",1.2);
+  rec1.record("foo",1.2);
+  rec2.record("foo",9.1);
+  rec2.record("foo",9.2);
+  rec2.record("foo",9.3);
+  rec2.record("foo",9.4);
+  rec2.record("foo",9.4);
+  rec2.record("foo",9.4);
+  rec2.record("foo",9.4);
+  rec1.record("foo",1.2);
+  rec1.record("foo",1.2);
+  rec1.record("foo",1.2);
+  rec2.record("fiii",5.5);
+  rec1.record("foo",1.2);
+  rec1.record("foo",1.2);
+  rec2.record("foo",9.4);
+  rec2.record("foo",9.4);
+  rec1.record("foo",1.2);
+  rec1.record("foo",1.0);
+  rec2.record("fiii",3.3);
+  rec1.record("foo",1.0);
+  rec1.record("foo",1.0);
+  rec1.record("foo",1.0);
+  rec1.record("foo",1.0);
+  rec1.record("foo",1.1);
 
   return 0;
 }
