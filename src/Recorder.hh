@@ -3,6 +3,8 @@
 #ifndef __Recorder_hh__
 #define __Recorder_hh__
 
+#include "zmqutils.hh"
+
 #include <cassert>
 #include <chrono>
 #include <cstdlib>
@@ -10,8 +12,9 @@
 #include <iostream>
 #include <type_traits>
 #include <unordered_map>
+#include <memory>
 
-class Recorder
+class Recorder : public zmqutils::Socket
 {
  public:
   Recorder() = delete;
@@ -20,11 +23,16 @@ class Recorder
   explicit Recorder(uint64_t object_identifier)
       : _object_identifier(object_identifier) {
     storage.reserve(128);
-    // connect socket
+    if (zmqutils::Socket::socket_context != nullptr) {
+      socket.reset(new zmq::socket_t(*zmqutils::Socket::socket_context, ZMQ_PUSH));
+      socket->connect(zmqutils::Socket::socket_address.c_str());
+    }
   }
 
   ~Recorder() {
-    // disconnect socket
+    if (socket) {
+      socket->close();
+    }
   }
 
   Recorder& setup(std::string const& key, std::string const& unit) {
@@ -83,6 +91,7 @@ class Recorder
 
   uint64_t _object_identifier;
   std::unordered_map<std::string, Item> storage;
+  std::unique_ptr<zmq::socket_t> _socket;
 
   /**
    * Create a item from name, value and time paramters.

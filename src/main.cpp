@@ -19,44 +19,8 @@
 #include <type_traits>
 
 namespace {
-
 typedef std::chrono::milliseconds msec;
-
-inline bool poll(zmq_pollitem_t* items)
-{
-  constexpr static int POLL_INTERVALL = 100;
-  int const rval= zmq_poll(items, 1, POLL_INTERVALL);
-  switch (rval) {
-    case -1:
-      std::abort();
-      break;;
-    case 0:
-      return false;
-      break;;
-    default:
-      return true;
-      break;;
-  }
 }
-
-namespace socket {
-
-typedef std::function<void(zmq::socket_t*, char const*)> SockFunction;
-
-SockFunction connect = &zmq::socket_t::connect;
-SockFunction bind    = &zmq::socket_t::bind;
-
-void apply(SockFunction const& function, zmq::socket_t* socket, char const* address)
-{
-  try {
-    function(socket, address);
-  } catch (zmq::error_t& e) {
-    std::cout << __func__ << ":" << e.what() << std::endl;
-    std::exit(1);
-  }
-}
-
-}}
 
 class Component
 {
@@ -126,7 +90,7 @@ std::string     Component::socket_address;
 void producer(zmq::context_t* ctx)
 {
   zmq::socket_t vent(*ctx, ZMQ_PUSH);
-  socket::apply(socket::connect, &vent, "inproc://sink");
+  zmqutils::apply(zmqutils::connect, &vent, "inproc://sink");
 
   std::stringstream thread_id_string;
   thread_id_string << std::this_thread::get_id();
@@ -147,14 +111,14 @@ void producer(zmq::context_t* ctx)
 void consumer(zmq::context_t* ctx, std::atomic<bool> const* running)
 {
   zmq::socket_t sink(*ctx, ZMQ_PULL);
-  socket::apply(socket::bind, &sink, "inproc://sink");
+  zmqutils::apply(zmqutils::bind, &sink, "inproc://sink");
 
   bool polling_data = true;
   int num_messages = 0;
   zmq::message_t msg;
   zmq_pollitem_t pollitems[] = { { sink, 0, ZMQ_POLLIN, 0 } };
   while (running->load() || polling_data) {
-    if (!poll(pollitems)) {
+    if (!zmqutils::poll(pollitems)) {
       polling_data = false;
       continue;
     } else {
