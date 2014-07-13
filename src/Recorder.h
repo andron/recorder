@@ -1,9 +1,8 @@
 // -*- mode:c++; indent-tabs-mode:nil; -*-
 
-#ifndef __Recorder_hh__
-#define __Recorder_hh__
+#pragma once
 
-#include "zmqutils.hh"
+#include "zmqutils.h"
 
 #include <cassert>
 #include <chrono>
@@ -147,5 +146,3 @@ class Recorder : public zmqutils::Socket
   }
 
 };
-
-#endif // __Recorder_hh__

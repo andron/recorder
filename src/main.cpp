@@ -1,6 +1,6 @@
 // -*- mode:c++; indent-tabs-mode:nil; -*-
 
-#include "Recorder.hh"
+#include "Recorder.h"
 
 #include <zmq.hpp>
 
