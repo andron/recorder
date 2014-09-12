@@ -1,0 +1,58 @@
+// -*- mode:c++; indent-tabs-mode:nil; -*-
+
+message CustomPayload {
+  required int32 id = 1;
+  required bytes data = 2;
+}
+
+message Position {
+  required int64 time = 1;
+  required double x = 2;
+  required double y = 3;
+  required double z = 4;
+}
+
+message Route {
+  required int32 id = 1;
+  repeated Position positions = 2;
+}
+
+//message LoadInfoRequest {
+//  enum LoadType {
+//    BRIEF = 0;
+//    VERBOSE = 1;
+//  }
+//
+//  required LoadType type = 2 [default = BRIEF];
+//}
+//
+//message LoadInfoResponse {
+//  message Payload {
+//    required string type = 1;
+//    required string value = 2;
+//  }
+//
+//  required string id = 1;
+//  required int32 cpuload = 2;
+//  required int32 memusage = 3;
+//  repeated Payload data = 4;
+//}
+//
+//message Person {
+//  required string name = 1;
+//  required int32 id = 2;
+//  optional string email = 3;
+//
+//  enum PhoneType {
+//    MOBILE = 0;
+//    HOME = 1;
+//    WORK = 2;
+//  }
+//
+//  message PhoneNumber {
+//    required string number = 1;
+//    optional PhoneType type = 2 [default = HOME];
+//  }
+//
+//  repeated PhoneNumber phone = 4;
+//}

@@ -1,17 +1,38 @@
 // -*- mode:c++; indent-tabs-mode:nil; -*-
 
+/*
+  Copyright (c) 2014, Anders Ronnbrant, anders.ronnbrant@gmail.com
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+  THE SOFTWARE.
+*/
+
 #pragma once
 
 #include <zmq.hpp>
 
 #include <string>
 #include <memory>
-#include <iostream>
 
 namespace zmqutils {
 
-inline bool poll(zmq_pollitem_t* items)
-{
+inline bool
+poll(zmq_pollitem_t* items) {
   constexpr static int POLL_INTERVALL = 100;
   int const rval= zmq_poll(items, 1, POLL_INTERVALL);
   switch (rval) {
@@ -27,37 +48,58 @@ inline bool poll(zmq_pollitem_t* items)
   }
 }
 
-typedef std::function<void(zmq::socket_t*, char const*)> SockFunction;
+// inline int
+// send(void* socket, QByteArray const& msg) {
+//   zmq_msg_t z_msg;
+//   zmq_msg_init_size(&z_msg, msg.size());
+//   memcpy(zmq_msg_data(&z_msg), msg.data(), msg.size());
+//   int rval = zmq_send(socket, &z_msg, 0);
+//   if (rval != 0) {
+//     perror("zmq_send");
+//   }
+//   zmq_msg_close(&z_msg);
+//   return rval;
+// }
 
-SockFunction connect = &zmq::socket_t::connect;
-SockFunction bind    = &zmq::socket_t::bind;
+// inline int
+// recv(void* socket, QByteArray* msg, int options = 0) {
+//   zmq_msg_t z_msg;
+//   zmq_msg_init(&z_msg);
+//   int rval = zmq_recv(socket, &z_msg, options);
+//   if (rval != 0) {
+//     perror("zmq_recv");
+//     zmq_msg_close(&z_msg);
+//     return rval;
+//   }
+//   msg->resize(zmq_msg_size(&z_msg));
+//   memcpy(msg->data(), zmq_msg_data(&z_msg), msg->size());
+//   zmq_msg_close(&z_msg);
+//   return rval;
+// }
 
-void apply(SockFunction const& function, zmq::socket_t* socket, char const* address)
-{
+typedef std::function<void(zmq::socket_t*, char const*)> socket_func;
+
+socket_func fconnect = &zmq::socket_t::connect;
+socket_func fbind    = &zmq::socket_t::bind;
+
+inline void
+apply(socket_func const& function, zmq::socket_t* socket, char const* address) {
   try {
     function(socket, address);
   } catch (zmq::error_t& e) {
-    std::cout << __func__ << ":" << e.what() << std::endl;
+    std::fprintf(stderr, "Error:%s: %s", __func__, e.what());
     std::exit(1);
   }
 }
 
-class Socket {
- public:
-  ~Socket() {}
- protected:
-  Socket() {}
-  Socket(Socket const&) = delete;
-
-  static zmq::context_t* socket_context;
-  static std::string     socket_address;
-
-  static void setContext(zmq::context_t* ctx) { socket_context = ctx; }
-  static void setAddress(std::string addr)    { socket_address = addr; }
-
-  std::unique_ptr<zmq::socket_t> socket;
-};
-zmq::context_t* Socket::socket_context = nullptr;
-std::string     Socket::socket_address;
-
+inline void
+connect(zmq::socket_t* socket, std::string const& address) {
+  apply(fconnect, socket, address.c_str());
 }
+
+inline void
+bind(zmq::socket_t* socket, std::string const& address) {
+  apply(fbind, socket, address.c_str());
+}
+
+}  // namespace zmqutils
