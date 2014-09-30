@@ -31,6 +31,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "zmq.hpp"
 
@@ -40,6 +41,7 @@ class Recorder {
   Recorder() = delete;
   Recorder(Recorder const&) = delete;
   explicit Recorder(uint64_t id);
+  Recorder(uint64_t id, std::string const address);
   ~Recorder();
 
   /**
@@ -69,7 +71,7 @@ class Recorder {
   /**
      Set class socket address for ZeroMQ communication.
   */
-  static void setAddress(std::string addr);
+  static void setAddress(std::string address);
 
   struct Item {
     enum Type { INIT, OTHER, CHAR, INT, UINT, FLOAT, STR } type;
@@ -86,16 +88,19 @@ class Recorder {
 
     Item();
     Item(std::string const& name, std::string const& unit);
+    std::string&& toString() const;
   };
 
  private:
   // ---------------------------------------------------------------------------
   static zmq::context_t* socket_context;
   static std::string     socket_address;
+  static thread_local std::vector<Item> send_buffer;
 
   uint64_t _identifier;
+  std::string _socket_address;
   std::unordered_map<std::string, Item> _storage;
   std::unique_ptr<zmq::socket_t> _socket;
 
-  void send(Item const& item) const;
+  void send(Item const& item);
 };

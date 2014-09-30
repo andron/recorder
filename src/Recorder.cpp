@@ -33,10 +33,9 @@
 #include <type_traits>
 #include <unordered_map>
 
-#include <iostream>
-
 #include "zmqutils.h"
 
+void Error(char const* msg) { std::fprintf(stderr, "%s\n", msg); }
 
 // Template instantiation
 template<> Recorder&
@@ -68,25 +67,68 @@ Recorder::Item::Item()
     : type(INIT), time(-1) {
 }
 
+std::string&&
+Recorder::Item::toString() const {
+  char buffer[128];
+  std::string name(this->name);
+  std::string unit(this->unit);
+  unit = "[" + unit + "]";
+
+  snprintf(buffer, sizeof(buffer), "%ld %10s = ", this->time, name.c_str());
+  switch (this->type) {
+    case Item::CHAR:
+      sprintf(buffer, "%c", data.c);
+      break;
+    case Item::INT:
+      sprintf(buffer, "%ld", data.i);
+      break;
+    case Item::UINT:
+      sprintf(buffer, "%lu", data.u);
+      break;
+    case Item::FLOAT:
+      sprintf(buffer, "%f", data.d);
+      break;
+    case Item::STR:
+      {
+        std::string str(data.s, sizeof(data.s));
+        sprintf(buffer, "%s", str.c_str());
+      }
+      break;
+    default:
+      break;
+  }
+  snprintf(buffer, 2+sizeof(this->unit), "%s\n", unit.c_str());
+  return std::move(std::string(buffer));
+}
+
 Recorder::Item::Item(std::string const& n, std::string const& u)
     : Item() {
+  if (n.length() > sizeof(name)) {
+    Error("Maximum size of parameter name 8 chars");
+    std::exit(1);
+  } else if (u.length() > sizeof(unit)) {
+    Error("Maximum size of parameter unit 8 chars");
+    std::exit(1);
+  }
   std::strncpy(name, n.c_str(), sizeof(name));
   std::strncpy(unit, u.c_str(), sizeof(unit));
 }
 
-
-void Error(char const* msg) { std::fprintf(stderr, "%s\n", msg); }
-
-Recorder::Recorder(uint64_t id) : _identifier(id) {
-  _storage.reserve(128);
+Recorder::Recorder(uint64_t id, std::string const address)
+    : _identifier(id)
+    , _socket_address(address)
+{
+  _storage.reserve(256);
 
   bool error = false;
   if (Recorder::socket_context == nullptr) {
     Error("Recorder: setContext() must be called before instantiation");
     error = true;
   }
-  if (Recorder::socket_address.empty()) {
-    Error("Recorder: setAddress() must be called before instantiation");
+  if (_socket_address.empty()) {
+    Error("Recorder: Socket address empty, setAddress() must be called");
+    Error("          before first instantiation or provide local address");
+    Error("          using ctor Recorder(uint64_t, std::string)");
     error = true;
   }
 
@@ -94,8 +136,16 @@ Recorder::Recorder(uint64_t id) : _identifier(id) {
     std::exit(1);
   }
 
+  constexpr int linger = 3000;
+
   _socket.reset(new zmq::socket_t(*Recorder::socket_context, ZMQ_PUSH));
-  zmqutils::connect(_socket.get(), Recorder::socket_address);
+  _socket->setsockopt(ZMQ_LINGER, &linger, sizeof(linger));
+
+  zmqutils::connect(_socket.get(), _socket_address);
+}
+
+Recorder::Recorder(uint64_t id)
+    : Recorder(id, Recorder::socket_address) {
 }
 
 Recorder::~Recorder() {
@@ -190,33 +240,14 @@ Recorder& Recorder::record(std::string const& key, T const value) {
 
 
 void
-Recorder::send(Item const& item) const {
-  std::string name(item.name);
-  std::string unit(item.unit);
-  unit = "[" + unit + "]";
-  printf("[%lu] %ld %10s:%-6s = ",
-         _identifier, item.time, name.c_str(), unit.c_str());
-  switch (item.type) {
-    case Item::CHAR:
-      printf("%c\n", item.data.c);
-      break;
-    case Item::INT:
-      printf("%ld\n", item.data.i);
-      break;
-    case Item::UINT:
-      printf("%lu\n", item.data.u);
-      break;
-    case Item::FLOAT:
-      printf("%f\n", item.data.d);
-      break;
-    case Item::STR:
-      {
-        std::string str(item.data.s, sizeof(item.data.s));
-        printf("%s\n", str.c_str());
-      }
-      break;
-    default:
-      break;
+Recorder::send(Item const& item) {
+  static thread_local zmq::message_t zmsg;
+  send_buffer.emplace_back(item);
+  if (send_buffer.size() == send_buffer.capacity()) {
+    zmsg.rebuild(send_buffer.size() * sizeof(item));
+    std::memcpy(zmsg.data(), send_buffer.data(), send_buffer.size() * sizeof(item));
+    _socket->send(zmsg);
+    send_buffer.clear();
   }
 }
 
@@ -232,3 +263,4 @@ Recorder::setAddress(std::string addr) {
 
 zmq::context_t* Recorder::socket_context = nullptr;
 std::string     Recorder::socket_address = "";
+thread_local std::vector<Recorder::Item> Recorder::send_buffer(4);

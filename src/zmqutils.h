@@ -37,6 +37,7 @@ poll(zmq_pollitem_t* items) {
   int const rval= zmq_poll(items, 1, POLL_INTERVALL);
   switch (rval) {
     case -1:
+      perror("zmq_poll");
       std::abort();
       break;;
     case 0:
@@ -79,8 +80,8 @@ poll(zmq_pollitem_t* items) {
 
 typedef std::function<void(zmq::socket_t*, char const*)> socket_func;
 
-socket_func fconnect = &zmq::socket_t::connect;
-socket_func fbind    = &zmq::socket_t::bind;
+static socket_func fconnect = &zmq::socket_t::connect;
+static socket_func fbind    = &zmq::socket_t::bind;
 
 inline void
 apply(socket_func const& function, zmq::socket_t* socket, char const* address) {
@@ -100,6 +101,27 @@ connect(zmq::socket_t* socket, std::string const& address) {
 inline void
 bind(zmq::socket_t* socket, std::string const& address) {
   apply(fbind, socket, address.c_str());
+}
+
+inline std::string
+to_string(zmq::message_t const& zmsg) {
+  std::vector<char> buffer(zmsg.size());
+  memcpy(static_cast<void*>(&buffer[0]), zmsg.data(), zmsg.size());
+  return std::string(buffer.begin(), buffer.end());
+}
+
+inline zmq::message_t
+to_message(std::string const&) {
+  zmq::message_t zmsg;
+  return zmsg;
+}
+
+inline std::string
+get_address(zmq::socket_t& zsock) {
+  std::vector<char> optbuf(256);
+  auto optlen = optbuf.size();
+  zsock.getsockopt(ZMQ_LAST_ENDPOINT, static_cast<void*>(&optbuf[0]), &optlen);
+  return std::string(optbuf.begin(), optbuf.begin() + optlen);
 }
 
 }  // namespace zmqutils
