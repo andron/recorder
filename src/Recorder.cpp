@@ -242,8 +242,8 @@ Recorder& Recorder::record(std::string const& key, T const value) {
 
 void
 Recorder::send(Item const& item) {
-  _send_buffer[_send_buffer_idx++] = item;
-  if (_send_buffer_idx == _send_buffer.max_size()) {
+  _send_buffer[_send_buffer_index++] = item;
+  if (_send_buffer_index == _send_buffer.max_size()) {
     flushSendBuffer();
   }
 }
@@ -252,9 +252,9 @@ Recorder::send(Item const& item) {
 void
 Recorder::flushSendBuffer() {
   constexpr auto item_size = sizeof(decltype(_send_buffer)::value_type);
-  if (_send_buffer_idx > 0) {
-    _socket->send(_send_buffer.data(), _send_buffer_idx * item_size);
-    _send_buffer_idx = 0;
+  if (_send_buffer_index > 0) {
+    _socket->send(_send_buffer.data(), _send_buffer_index * item_size);
+    _send_buffer_index = 0;
   }
 }
 

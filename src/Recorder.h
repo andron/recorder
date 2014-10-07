@@ -101,7 +101,7 @@ class Recorder {
 
   typedef std::array<Item, 1<<8> SendBuffer;
   SendBuffer _send_buffer;
-  SendBuffer::size_type _send_buffer_idx;
+  SendBuffer::size_type _send_buffer_index;
 
   uint64_t _identifier;
   std::string _socket_address;
