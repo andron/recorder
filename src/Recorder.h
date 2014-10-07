@@ -74,7 +74,8 @@ class Recorder {
   static void setAddress(std::string address);
 
   struct Item {
-    enum Type { INIT, OTHER, CHAR, INT, UINT, FLOAT, STR } type;
+    enum class Type : std::int32_t { INIT, OTHER, CHAR, INT, UINT, FLOAT, STR };
+    Type type;
     int64_t time;
     union Data {
       char     c;

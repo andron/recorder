@@ -64,7 +64,7 @@ Recorder::record<double>(std::string const& key, double value);
 
 
 Recorder::Item::Item()
-    : type(INIT), time(-1) {
+    : type(Type::INIT), time(-1) {
 }
 
 std::string&&
@@ -76,19 +76,19 @@ Recorder::Item::toString() const {
 
   snprintf(buffer, sizeof(buffer), "%ld %10s = ", this->time, name.c_str());
   switch (this->type) {
-    case Item::CHAR:
+    case Type::CHAR:
       sprintf(buffer, "%c", data.c);
       break;
-    case Item::INT:
+    case Type::INT:
       sprintf(buffer, "%ld", data.i);
       break;
-    case Item::UINT:
+    case Type::UINT:
       sprintf(buffer, "%lu", data.u);
       break;
-    case Item::FLOAT:
+    case Type::FLOAT:
       sprintf(buffer, "%f", data.d);
       break;
-    case Item::STR:
+    case Type::STR:
       {
         std::string str(data.s, sizeof(data.s));
         sprintf(buffer, "%s", str.c_str());
@@ -177,14 +177,14 @@ createItem(Recorder::Item const& clone,
   std::memcpy(&item, &clone, sizeof(item));
   item.time = time;
   if (std::is_same<char, T>::value) {
-    item.type   = Recorder::Item::CHAR;
+    item.type   = Recorder::Item::Type::CHAR;
     item.data.c = value;
   } else if (std::is_integral<T>::value) {
     if (std::is_signed<T>::value) {
-      item.type   = Recorder::Item::INT;
+      item.type   = Recorder::Item::Type::INT;
       item.data.i = value;
     } else if (std::is_unsigned<T>::value) {
-      item.type   = Recorder::Item::UINT;
+      item.type   = Recorder::Item::Type::UINT;
       item.data.u = value;
     } else {
       static_assert(
@@ -192,7 +192,7 @@ createItem(Recorder::Item const& clone,
           "Unknown signedness for integral type");
     }
   } else if (std::is_floating_point<T>::value) {
-    item.type   = Recorder::Item::FLOAT;
+    item.type   = Recorder::Item::Type::FLOAT;
     item.data.d = value;
   } else {
     static_assert(
@@ -210,7 +210,7 @@ createItem(Recorder::Item const& clone,
 //   Recorder::Item item;
 //   std::memcpy(&item, &clone, sizeof(item));
 //   item.time = time;
-//   item.type = Recorder::Item::STR;
+//   item.type = Type::STR;
 //   strncpy(&item.data.s[0], &value[0], sizeof(item.data.s));
 //   return item;
 //}
@@ -222,7 +222,7 @@ Recorder& Recorder::record(std::string const& key, T const value) {
   auto it = _storage.find(key);
   if (it == _storage.end()) {
     assert(0 && "Must use setup() prior to record()");
-  } else if (it->second.type == Item::INIT) {
+  } else if (it->second.type == Item::Type::INIT) {
     auto const item = createItem(it->second, time, value);
     _storage[key] = item;
     send(item);
