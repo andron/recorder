@@ -263,4 +263,6 @@ Recorder::setAddress(std::string addr) {
 
 zmq::context_t* Recorder::socket_context = nullptr;
 std::string     Recorder::socket_address = "";
-thread_local std::vector<Recorder::Item> Recorder::send_buffer(4);
+
+//thread_local Recorder::SendBuffer Recorder::send_buffer;
+//thread_local Recorder::SendBuffer::size_type Recorder::send_buffer_idx = 0;
