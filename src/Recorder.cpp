@@ -115,7 +115,8 @@ Recorder::Item::Item(std::string const& n, std::string const& u)
 }
 
 Recorder::Recorder(uint64_t id, std::string const address)
-    : _identifier(id)
+    : _send_buffer_index(0)
+    , _identifier(id)
     , _socket_address(address)
 {
   _storage.reserve(256);
