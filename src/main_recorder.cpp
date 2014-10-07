@@ -33,13 +33,16 @@
 #include <string>
 #include <atomic>
 #include <thread>
+#include <cstdlib>
+#include <chrono>
 
 namespace {
 typedef std::chrono::milliseconds msec;
+typedef std::chrono::microseconds usec;
 }
 
 int
-main(int, char**) {
+main(int ac, char** av) {
   zmq::context_t ctx(1);
 
   char* buf = reinterpret_cast<char*>(malloc(32*1e6));
@@ -58,45 +61,79 @@ main(int, char**) {
   std::string const addr("inproc://recorder");
   std::atomic<bool> running(true);
 
+  float duration_msec;
+
   std::thread puller = std::thread(
-      [&ctx, &running, addr] {
+      [&ctx, &running, &duration_msec, addr] {
+        auto t1 = std::chrono::high_resolution_clock::now();
         zmq::socket_t sock(ctx, ZMQ_PULL);
         zmqutils::bind(&sock, addr);
-        zmq::message_t zmsg(128);
+        zmq::message_t zmsg(256);
         bool messages_to_process = true;
-        int count = 0;
+        int64_t count = 0;
         zmq_pollitem_t pollitems[] = { { sock, 0, ZMQ_POLLIN, 0 } };
         while (running.load() || messages_to_process) {
           if (!zmqutils::poll(pollitems)) {
             messages_to_process = false;
           } else {
             sock.recv(&zmsg);
-            ++count;
+            auto num_params = zmsg.size() / sizeof(Recorder::Item);
+            count += num_params;
           }
         }
         sock.close();
-        printf("msg count: %d\n", count);
+
+        auto mib = 1<<20;
+
+        auto t2 = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<usec>(t2 - t1);
+        duration_msec = duration.count()/1000.0;
+        printf("Messages:     %ld (%.3fms)\n", count, duration_msec);
+        printf("Messages/sec: %.1f (%.1fMiB/sec)\n",
+               count * 1000 / duration_msec,
+               sizeof(Recorder::Item) * count * 1000 / (mib * duration_msec));
       });
 
   Recorder::setContext(&ctx);
   Recorder::setAddress(addr);
 
+  int num_threads  = 4;
+  if (ac > 1)
+    num_threads = std::atoi(av[1]);
+
+  int num_rounds = 1e5;
+  if (ac > 2)
+    num_rounds = std::atoi(av[2]);
+
+  auto num_messages = num_threads * 4 * (2 * num_rounds - 1);
+  printf("Running %d threads, sending 4*%d records -> %d (%ldMiB)\n",
+         num_threads, num_rounds, num_messages,
+         (num_messages * sizeof(Recorder::Item))/(1024*1024));
+
   std::vector<std::thread> recorders;
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < num_threads; ++i) {
     recorders.emplace_back(std::thread(
-        [&i] {
+        [&i, &num_rounds] {
           char name1[8];
           char name2[8];
-          snprintf(name1, sizeof(name1), "foo%02d", i);
-          snprintf(name2, sizeof(name2), "bar%02d", i);
+          char name3[8];
+          char name4[8];
+          snprintf(name1, sizeof(name1), "A%02d", i);
+          snprintf(name2, sizeof(name2), "B%02d", i);
+          snprintf(name3, sizeof(name3), "C%02d", i);
+          snprintf(name4, sizeof(name4), "D%02d", i);
 
           Recorder rec(i);
           rec.setup(name1, "m");
           rec.setup(name2, "ms");
+          rec.setup(name3, "kg");
+          rec.setup(name4, "m/s");
 
-          for (int j = 0; j < 1e5; ++j) {
+          for (int j = 0; j < num_rounds; ++j) {
             rec.record(name1, j);
             rec.record(name2, 1.0/j);
+            rec.record(name3, j*j);
+            rec.record(name4, std::log(j));
           }
         }));
   }
