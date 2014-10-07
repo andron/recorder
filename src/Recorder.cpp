@@ -198,7 +198,7 @@ createItem(Recorder::Item const& clone,
   } else {
     static_assert(
         std::is_integral<T>::value || std::is_floating_point<T>::value,
-        "Value type must be integral or floating point");
+        "Value type must be char, integral or floating point");
   }
   return item;
 }
