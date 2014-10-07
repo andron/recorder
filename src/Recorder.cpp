@@ -149,6 +149,7 @@ Recorder::Recorder(uint64_t id)
 }
 
 Recorder::~Recorder() {
+  flushSendBuffer();
   if (_socket) {
     _socket->close();
   }
@@ -241,15 +242,22 @@ Recorder& Recorder::record(std::string const& key, T const value) {
 
 void
 Recorder::send(Item const& item) {
-  static thread_local zmq::message_t zmsg;
-  send_buffer.emplace_back(item);
-  if (send_buffer.size() == send_buffer.capacity()) {
-    zmsg.rebuild(send_buffer.size() * sizeof(item));
-    std::memcpy(zmsg.data(), send_buffer.data(), send_buffer.size() * sizeof(item));
-    _socket->send(zmsg);
-    send_buffer.clear();
+  _send_buffer[_send_buffer_idx++] = item;
+  if (_send_buffer_idx == _send_buffer.max_size()) {
+    flushSendBuffer();
   }
 }
+
+
+void
+Recorder::flushSendBuffer() {
+  constexpr auto item_size = sizeof(decltype(_send_buffer)::value_type);
+  if (_send_buffer_idx > 0) {
+    _socket->send(_send_buffer.data(), _send_buffer_idx * item_size);
+    _send_buffer_idx = 0;
+  }
+}
+
 
 void
 Recorder::setContext(zmq::context_t* ctx) {

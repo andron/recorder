@@ -92,11 +92,16 @@ class Recorder {
     std::string&& toString() const;
   };
 
+  void flushSendBuffer();
+
  private:
   // ---------------------------------------------------------------------------
   static zmq::context_t* socket_context;
   static std::string     socket_address;
-  static thread_local std::vector<Item> send_buffer;
+
+  typedef std::array<Item, 1<<8> SendBuffer;
+  SendBuffer _send_buffer;
+  SendBuffer::size_type _send_buffer_idx;
 
   uint64_t _identifier;
   std::string _socket_address;
