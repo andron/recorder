@@ -10,7 +10,7 @@ REQUIRES := #
 $(call setup)
 # --------------------------------------------------
 
-_CXXFLAGS := -std=c++11 -O0
+_CXXFLAGS := -std=c++11
 _LDFLAGS  := -rdynamic -Wl,-rpath=../lib -Wl,-rpath=./lib -Wl,-rpath=$(TGTDIR)
 
 TARGETS := recordertest servertest
