@@ -219,7 +219,7 @@ createItem(Recorder::Item const& clone,
 
 template<typename T>
 Recorder& Recorder::record(std::string const& key, T const value) {
-  auto const time = std::clock();
+  auto const time = std::time(nullptr);
   auto it = _storage.find(key);
   if (it == _storage.end()) {
     assert(0 && "Must use setup() prior to record()");
