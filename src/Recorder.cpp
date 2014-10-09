@@ -67,6 +67,7 @@ Recorder::Item::Item()
     : type(Type::INIT), time(-1) {
 }
 
+
 std::string&&
 Recorder::Item::toString() const {
   char buffer[128];
@@ -101,6 +102,7 @@ Recorder::Item::toString() const {
   return std::move(std::string(buffer));
 }
 
+
 Recorder::Item::Item(std::string const& n, std::string const& u)
     : Item() {
   if (n.length() > sizeof(name)) {
@@ -113,6 +115,7 @@ Recorder::Item::Item(std::string const& n, std::string const& u)
   std::strncpy(name, n.c_str(), sizeof(name));
   std::strncpy(unit, u.c_str(), sizeof(unit));
 }
+
 
 Recorder::Recorder(uint64_t id, std::string const address)
     : _send_buffer_index(0)
@@ -145,9 +148,11 @@ Recorder::Recorder(uint64_t id, std::string const address)
   zmqutils::connect(_socket.get(), _socket_address);
 }
 
+
 Recorder::Recorder(uint64_t id)
     : Recorder(id, Recorder::socket_address) {
 }
+
 
 Recorder::~Recorder() {
   flushSendBuffer();
@@ -155,6 +160,7 @@ Recorder::~Recorder() {
     _socket->close();
   }
 }
+
 
 Recorder&
 Recorder::setup(std::string const& key, std::string const& unit) {
