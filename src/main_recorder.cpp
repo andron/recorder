@@ -79,6 +79,11 @@ main(int ac, char** av) {
             sock.recv(&zmsg);
             auto num_params = zmsg.size() / sizeof(Recorder::Item);
             count += num_params;
+
+            Recorder::Item* item = reinterpret_cast<Recorder::Item*>(zmsg.data());
+            if (item->type == Recorder::Item::Type::STR) {
+              printf("Value: %s\n", item->data.s);
+            }
           }
         }
         sock.close();
@@ -96,6 +101,15 @@ main(int ac, char** av) {
 
   Recorder::setContext(&ctx);
   Recorder::setAddress(addr);
+
+  {
+    Recorder foo(0);
+    foo.setup("test","m/s");
+    foo.record("test","foppa");
+    foo.record("test","nalle");
+    foo.record("test","fludo");
+    foo.flushSendBuffer();
+  }
 
   int num_threads  = 4;
   if (ac > 1)
