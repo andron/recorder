@@ -37,12 +37,58 @@
 
 void Error(char const* msg) { std::fprintf(stderr, "%s\n", msg); }
 
-// Template instantiation
-template<> Recorder&
-Recorder::record<char const*>(std::string const& key, char const* value) {
-  record(key, *value);
-  return (*this);
+// Create a item from name, value and time paramters.
+// ---------------------------------------------------------------------------
+// Specialization for char const*
+Recorder::Item
+createItem(Recorder::Item const& clone,
+           int64_t const time,
+           char const* value) {
+  Recorder::Item item;
+  std::memcpy(&item, &clone, sizeof(item));
+  item.time = time;
+  item.type = Recorder::Item::Type::STR;
+  strncpy(&item.data.s[0], &value[0], sizeof(item.data.s));
+  return std::move(item);
 }
+
+template<typename T> Recorder::Item
+createItem(Recorder::Item const& clone,
+           int64_t const time,
+           T const value) {
+  Recorder::Item item;
+  std::memcpy(&item, &clone, sizeof(item));
+  item.time = time;
+  if (std::is_same<char, T>::value) {
+    item.type   = Recorder::Item::Type::CHAR;
+    item.data.c = value;
+  } else if (std::is_integral<T>::value) {
+    if (std::is_signed<T>::value) {
+      item.type   = Recorder::Item::Type::INT;
+      item.data.i = value;
+    } else if (std::is_unsigned<T>::value) {
+      item.type   = Recorder::Item::Type::UINT;
+      item.data.u = value;
+    } else {
+      static_assert(
+          std::is_signed<T>::value || std::is_unsigned<T>::value,
+          "Unknown signedness for integral type");
+    }
+  } else if (std::is_floating_point<T>::value) {
+    item.type   = Recorder::Item::Type::FLOAT;
+    item.data.d = value;
+  } else {
+    static_assert(
+        std::is_integral<T>::value || std::is_floating_point<T>::value,
+        "Value type must be char, integral or floating point");
+  }
+  return item;
+}
+// ---------------------------------------------------------------------------
+
+
+template Recorder&
+Recorder::record<char const*>(std::string const& key, char const* value);
 
 template Recorder&
 Recorder::record<char>(std::string const& key, char value);
@@ -174,55 +220,6 @@ Recorder::setup(std::string const& key, std::string const& unit) {
   return (*this);
 }
 
-
-//!! Create a item from name, value and time paramters.
-// ---------------------------------------------------------------------------
-template<typename T> Recorder::Item
-createItem(Recorder::Item const& clone,
-           int64_t const time,
-           T const value) {
-  Recorder::Item item;
-  std::memcpy(&item, &clone, sizeof(item));
-  item.time = time;
-  if (std::is_same<char, T>::value) {
-    item.type   = Recorder::Item::Type::CHAR;
-    item.data.c = value;
-  } else if (std::is_integral<T>::value) {
-    if (std::is_signed<T>::value) {
-      item.type   = Recorder::Item::Type::INT;
-      item.data.i = value;
-    } else if (std::is_unsigned<T>::value) {
-      item.type   = Recorder::Item::Type::UINT;
-      item.data.u = value;
-    } else {
-      static_assert(
-          std::is_signed<T>::value || std::is_unsigned<T>::value,
-          "Unknown signedness for integral type");
-    }
-  } else if (std::is_floating_point<T>::value) {
-    item.type   = Recorder::Item::Type::FLOAT;
-    item.data.d = value;
-  } else {
-    static_assert(
-        std::is_integral<T>::value || std::is_floating_point<T>::value,
-        "Value type must be char, integral or floating point");
-  }
-  return item;
-}
-
-// Specialization for char const*
-// template<> Recorder::Item
-// createItem(Recorder::Item const& clone,
-//            int64_t const time,
-//            char value[]) {
-//   Recorder::Item item;
-//   std::memcpy(&item, &clone, sizeof(item));
-//   item.time = time;
-//   item.type = Type::STR;
-//   strncpy(&item.data.s[0], &value[0], sizeof(item.data.s));
-//   return item;
-//}
-// ---------------------------------------------------------------------------
 
 template<typename T>
 Recorder& Recorder::record(std::string const& key, T const value) {
