@@ -153,10 +153,8 @@ Recorder::Item::Item(std::string const& n, std::string const& u)
     : Item() {
   if (n.length() > sizeof(name)) {
     Error("Maximum size of parameter name 8 chars");
-    std::exit(1);
   } else if (u.length() > sizeof(unit)) {
     Error("Maximum size of parameter unit 8 chars");
-    std::exit(1);
   }
   std::strncpy(name, n.c_str(), sizeof(name));
   std::strncpy(unit, u.c_str(), sizeof(unit));
