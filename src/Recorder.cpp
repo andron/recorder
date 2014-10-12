@@ -49,7 +49,7 @@ createItem(Recorder::Item const& clone,
   item.time = time;
   item.type = Recorder::Item::Type::STR;
   strncpy(&item.data.s[0], &value[0], sizeof(item.data.s));
-  return std::move(item);
+  return item;
 }
 
 template<typename T> Recorder::Item
