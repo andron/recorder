@@ -75,15 +75,20 @@ main(int ac, char** av) {
         while (running.load() || messages_to_process) {
           if (!zmqutils::poll(pollitems)) {
             messages_to_process = false;
-          } else {
-            sock.recv(&zmsg);
-            auto num_params = zmsg.size() / sizeof(Recorder::Item);
-            count += num_params;
+            continue;
+          }
 
-            Recorder::Item* item = reinterpret_cast<Recorder::Item*>(zmsg.data());
+          sock.recv(&zmsg);
+          auto num_params = zmsg.size() / sizeof(Recorder::Item);
+          count += num_params;
+
+          size_t idx = 0;
+          while (idx < (zmsg.size()/sizeof(Recorder::Item))) {
+            auto* item = reinterpret_cast<Recorder::Item*>(zmsg.data()) + idx;
             if (item->type == Recorder::Item::Type::STR) {
               printf("Value: %s\n", item->data.s);
             }
+            ++idx;
           }
         }
         sock.close();
