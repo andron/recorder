@@ -24,8 +24,11 @@
 
 #include "Recorder.h"
 
+#include "zmqutils.h"
+
+#include <zmq.hpp>
+
 #include <cassert>
-#include <chrono>
 #include <cstdlib>
 #include <cstring>
 #include <memory>
@@ -33,13 +36,14 @@
 #include <type_traits>
 #include <unordered_map>
 
-#include "zmqutils.h"
+//  Utilities
+//  ------------------------------------------------------------
+namespace {
 
 void Error(char const* msg) { std::fprintf(stderr, "%s\n", msg); }
 
-// Create a item from name, value and time paramters.
-// ---------------------------------------------------------------------------
-// Specialization for char const*
+//  Create a item from name, value and time paramters.
+//  Specialization for char const*
 Recorder::Item
 createItem(Recorder::Item const& clone,
            int64_t const time,
@@ -84,11 +88,9 @@ createItem(Recorder::Item const& clone,
   }
   return item;
 }
-// ---------------------------------------------------------------------------
 
+} //  namespace
 
-template Recorder&
-Recorder::record<char const*>(std::string const& key, char const* value);
 
 template Recorder&
 Recorder::record<char>(std::string const& key, char value);
@@ -163,18 +165,19 @@ Recorder::Item::Item(std::string const& n, std::string const& u)
 
 
 Recorder::Recorder(uint64_t id, std::string const address)
-    : _send_buffer_index(0)
-    , _identifier(id)
-    , _socket_address(address)
-{
-  _storage.reserve(256);
+    : send_buffer_index_(0)
+    , socket_address_(address)
+    , identifier_(id) {
+  items_.reserve(256);
 
   bool error = false;
+
   if (Recorder::socket_context == nullptr) {
     Error("Recorder: setContext() must be called before instantiation");
     error = true;
   }
-  if (_socket_address.empty()) {
+
+  if (socket_address_.empty()) {
     Error("Recorder: Socket address empty, setAddress() must be called");
     Error("          before first instantiation or provide local address");
     Error("          using ctor Recorder(uint64_t, std::string)");
@@ -186,11 +189,13 @@ Recorder::Recorder(uint64_t id, std::string const address)
   }
 
   constexpr int linger = 3000;
+  constexpr int sendtimeout = 2;
 
-  _socket.reset(new zmq::socket_t(*Recorder::socket_context, ZMQ_PUSH));
-  _socket->setsockopt(ZMQ_LINGER, &linger, sizeof(linger));
+  socket_.reset(new zmq::socket_t(*Recorder::socket_context, ZMQ_PUSH));
+  socket_->setsockopt(ZMQ_LINGER, &linger, sizeof(linger));
+  socket_->setsockopt(ZMQ_SNDTIMEO, &sendtimeout, sizeof(sendtimeout));
 
-  zmqutils::connect(_socket.get(), _socket_address);
+  zmqutils::connect(socket_.get(), socket_address_);
 }
 
 
@@ -201,18 +206,18 @@ Recorder::Recorder(uint64_t id)
 
 Recorder::~Recorder() {
   flushSendBuffer();
-  if (_socket) {
-    _socket->close();
+  if (socket_) {
+    socket_->close();
   }
 }
 
 
 Recorder&
 Recorder::setup(std::string const& key, std::string const& unit) {
-  auto it = _storage.find(key);
-  if (it == _storage.end()) {
+  auto it = items_.find(key);
+  if (it == items_.end()) {
     Item item(key, unit);
-    _storage.emplace(key, item);
+    items_.emplace(key, item);
   } else {
     // Ignore already setup parameters
   }
@@ -220,33 +225,49 @@ Recorder::setup(std::string const& key, std::string const& unit) {
 }
 
 
-template<typename T>
-Recorder& Recorder::record(std::string const& key, T const value) {
+template<> Recorder&
+Recorder::record<std::string const&>(std::string const& key,
+                                     std::string const& str) {
+  // Ignoring strings for now, converting to byte
+  record(key, str.c_str()[0]);
+  return *this;
+}
+
+template<> Recorder&
+Recorder::record<char const*>(std::string const& key,
+                              char const* str) {
+  // Ignoring strings for now, converting to byte
+  record(key, str[0]);
+  return *this;
+}
+
+template<typename T> Recorder&
+Recorder::record(std::string const& key, T const value) {
   auto const time = std::time(nullptr);
-  auto it = _storage.find(key);
-  if (it == _storage.end()) {
+  auto const it = items_.find(key);
+  if (it == items_.end()) {
     assert(0 && "Must use setup() prior to record()");
   } else if (it->second.type == Item::Type::INIT) {
     auto const item = createItem(it->second, time, value);
-    _storage[key] = item;
+    items_[key] = item;
     send(item);
-  } else if (memcmp(&value, &(it->second.data), sizeof(value)) != 0) {
+  } else if (std::memcmp(&(it->second.data), &value, sizeof(value))) {
     auto const item = createItem(it->second, time, value);
     it->second.time = time;
     send(it->second);
-    _storage[key] = item;
+    items_[key] = item;
     send(item);
   } else {
     // Ignore unchanged value
   }
-  return (*this);
+  return *this;
 }
 
 
 void
 Recorder::send(Item const& item) {
-  _send_buffer[_send_buffer_index++] = item;
-  if (_send_buffer_index == _send_buffer.max_size()) {
+  send_buffer_[send_buffer_index_++] = item;
+  if (send_buffer_index_ == send_buffer_.max_size()) {
     flushSendBuffer();
   }
 }
@@ -254,10 +275,10 @@ Recorder::send(Item const& item) {
 
 void
 Recorder::flushSendBuffer() {
-  constexpr auto item_size = sizeof(decltype(_send_buffer)::value_type);
-  if (_send_buffer_index > 0) {
-    _socket->send(_send_buffer.data(), _send_buffer_index * item_size);
-    _send_buffer_index = 0;
+  constexpr auto item_size = sizeof(decltype(send_buffer_)::value_type);
+  if (send_buffer_index_ > 0) {
+    socket_->send(send_buffer_.data(), send_buffer_index_ * item_size);
+    send_buffer_index_ = 0;
   }
 }
 

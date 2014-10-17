@@ -33,48 +33,18 @@
 #include <unordered_map>
 #include <vector>
 
-#include "zmq.hpp"
+namespace zmq {
+class context_t;
+class socket_t;
+}
 
 class Recorder {
  public:
+  // Recording item being passed around.
   // -------------------------------------------------------------------------
-  Recorder() = delete;
-  Recorder(Recorder const&) = delete;
-  explicit Recorder(uint64_t id);
-  Recorder(uint64_t id, std::string const address);
-  ~Recorder();
-
-  /**
-     Setup parameter with key (name) and unit for recording. The unit is
-     a string which must be parsed at the receiving side. Calling setup
-     multiple times with the same key value will have no effect, once
-     setup the key and unit will be locked.
-  */
-  Recorder& setup(std::string const& key, std::string const& unit);
-
-  /**
-     Record parameter with key, previously setup using setup(). The
-     value need not have the same type in each call but there will be a
-     difference between 1 (integer) and 1.0 (float) causing a new
-     recording event to occur.
-
-     Available specializations: char, int64_t, uint64_t, double
-  */
-  template<typename T>
-  Recorder& record(std::string const& key, T value);
-
-  /**
-     Set class context to use for ZeroMQ communication.
-  */
-  static void setContext(zmq::context_t* ctx);
-
-  /**
-     Set class socket address for ZeroMQ communication.
-  */
-  static void setAddress(std::string address);
-
-  struct Item {
-    enum class Type : std::int32_t { INIT, OTHER, CHAR, INT, UINT, FLOAT, STR };
+  struct __attribute__((packed)) Item {
+    enum class Type : std::int8_t
+    { INIT, OTHER, CHAR, INT, UINT, FLOAT, STR, };
     Type type;
     int64_t time;
     union Data {
@@ -84,29 +54,61 @@ class Recorder {
       uint64_t u;
       double   d;
     } data;
-    char name[8];
-    char unit[8];
+    char name[4];
+    char unit[4];
 
     Item();
     Item(std::string const& name, std::string const& unit);
     std::string toString() const;
   };
+  // -------------------------------------------------------------------------
 
+  Recorder() = delete;
+  Recorder(Recorder const&) = delete;
+  explicit Recorder(uint64_t id);
+  Recorder(uint64_t id, std::string const address);
+  ~Recorder();
+
+  //!  Setup parameter with key (name) and unit for recording. The unit
+  //!  is a string which must be parsed at the receiving side. Calling
+  //!  setup multiple times with the same key value will have no effect,
+  //!  once setup the key and unit will be locked.
+  Recorder& setup(std::string const& key, std::string const& unit);
+
+  //!  Record parameter with key, previously setup using setup(). The
+  //!  value need not have the same type in each call but there will be
+  //!  a difference between 1 (integer) and 1.0 (float) causing a new
+  //!  recording event to occur.
+  //!
+  //!  See implementation for available specializations.
+  template<typename T>
+  Recorder& record(std::string const& key, T const value);
+
+  //!  Explicitly flush send buffer, full or not.
   void flushSendBuffer();
 
+  //!  Set class context to use for ZeroMQ communication.
+  static void setContext(zmq::context_t* ctx);
+
+  //!  Set class socket address for ZeroMQ communication.
+  static void setAddress(std::string address);
+
  private:
-  // ---------------------------------------------------------------------------
+  void send(Item const& item);
+
+  //  TODO: Test using a int key instead of string for performance.
+  typedef std::unordered_map<std::string, Item> ItemContainer;
+  ItemContainer items_;
+
+  typedef std::array<Item, 1<<10> SendBuffer;
+  SendBuffer send_buffer_;
+  SendBuffer::size_type send_buffer_index_;
+
+  std::unique_ptr<zmq::socket_t> socket_;
+  std::string socket_address_;
+  uint64_t identifier_;
+
   static zmq::context_t* socket_context;
   static std::string     socket_address;
 
-  typedef std::array<Item, 1<<8> SendBuffer;
-  SendBuffer _send_buffer;
-  SendBuffer::size_type _send_buffer_index;
-
-  uint64_t _identifier;
-  std::string _socket_address;
-  std::unordered_map<std::string, Item> _storage;
-  std::unique_ptr<zmq::socket_t> _socket;
-
-  void send(Item const& item);
 };
