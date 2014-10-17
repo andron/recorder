@@ -110,7 +110,9 @@ Recorder::record<double>(std::string const& key, double value);
 
 
 Recorder::Item::Item()
-    : type(Type::INIT), time(-1) {
+    : type(Type::INIT)
+    , time(-1) {
+  memset(&data, 0, sizeof(data));
 }
 
 
