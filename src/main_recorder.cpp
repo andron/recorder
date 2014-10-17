@@ -84,10 +84,14 @@ main(int ac, char** av) {
 
           size_t idx = 0;
           while (idx < (zmsg.size()/sizeof(Recorder::Item))) {
-            auto* item = reinterpret_cast<Recorder::Item*>(zmsg.data()) + idx;
-            if (item->type == Recorder::Item::Type::STR) {
-              printf("Value: %s\n", item->data.s);
-            }
+            //auto* item = reinterpret_cast<Recorder::Item*>(zmsg.data()) + idx;
+            //   if (item->type == Recorder::Item::Type::STR) {
+            //     printf("Value: S %s %s\n", item->name, item->data.s);
+            //   } else if (item->type == Recorder::Item::Type::CHAR) {
+            //     printf("Value: C %s %c\n", item->name, item->data.c);
+            //   } else if (item->type == Recorder::Item::Type::INT) {
+            //     printf("Value: I %s %ld\n", item->name, item->data.i);
+            //   }
             ++idx;
           }
         }
@@ -107,14 +111,39 @@ main(int ac, char** av) {
   Recorder::setContext(&ctx);
   Recorder::setAddress(addr);
 
-  {
-    Recorder foo(0);
-    foo.setup("test","m/s");
-    foo.record("test","foppa");
-    foo.record("test","nalle");
-    foo.record("test","fludo");
-    foo.flushSendBuffer();
-  }
+  // {
+  //   Recorder foo(0);
+  //   foo.setup("test","m/s");
+  //   foo.record("test","foppa");
+  //   foo.record("test","nalle");
+  //   foo.record("test","fludo");
+  //   foo.record("test","fludo");
+  //   foo.record("test","fludo");
+  //   foo.record("test","nalle");
+  //   foo.record("test","fludo");
+
+  //   foo.setup("x","-");
+  //   foo.record("x","a");
+  //   foo.record("x","b");
+  //   foo.record("x","c");
+  //   foo.record("x","a");
+  //   foo.record("x","a");
+  //   foo.record("x","a");
+  //   foo.record("x","b");
+
+  //   foo.setup("yy","-");
+  //   foo.record("yy",1);
+  //   foo.record("yy",2);
+  //   foo.record("yy",3);
+  //   foo.record("yy",1);
+  //   foo.record("yy",1);
+  //   foo.record("yy",1);
+  //   foo.record("yy",1);
+  //   foo.record("yy",1);
+  //   foo.record("yy",2);
+
+  //   foo.flushSendBuffer();
+  // }
 
   int num_threads  = 4;
   if (ac > 1)
