@@ -114,13 +114,12 @@ Recorder::Item::Item()
 }
 
 
-std::string&&
+std::string
 Recorder::Item::toString() const {
   char buffer[128];
   std::string name(this->name);
   std::string unit(this->unit);
   unit = "[" + unit + "]";
-
   snprintf(buffer, sizeof(buffer), "%ld %10s = ", this->time, name.c_str());
   switch (this->type) {
     case Type::CHAR:
@@ -144,8 +143,8 @@ Recorder::Item::toString() const {
     default:
       break;
   }
-  snprintf(buffer, 2+sizeof(this->unit), "%s\n", unit.c_str());
-  return std::move(std::string(buffer));
+  snprintf(buffer, 2 + sizeof(this->unit), "%s\n", unit.c_str());
+  return std::string(buffer);
 }
 
 

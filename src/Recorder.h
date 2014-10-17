@@ -89,7 +89,7 @@ class Recorder {
 
     Item();
     Item(std::string const& name, std::string const& unit);
-    std::string&& toString() const;
+    std::string toString() const;
   };
 
   void flushSendBuffer();
