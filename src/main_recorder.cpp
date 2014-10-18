@@ -79,17 +79,17 @@ main(int ac, char** av) {
           }
 
           sock.recv(&zmsg);
-          auto num_params = zmsg.size() / sizeof(Recorder::Item);
+          auto num_params = zmsg.size() / sizeof(Item);
           count += num_params;
 
           size_t idx = 0;
-          while (idx < (zmsg.size()/sizeof(Recorder::Item))) {
-            //auto* item = reinterpret_cast<Recorder::Item*>(zmsg.data()) + idx;
-            //   if (item->type == Recorder::Item::Type::STR) {
+          while (idx < (zmsg.size()/sizeof(Item))) {
+            //auto* item = reinterpret_cast<Item*>(zmsg.data()) + idx;
+            //   if (item->type == Item::Type::STR) {
             //     printf("Value: S %s %s\n", item->name, item->data.s);
-            //   } else if (item->type == Recorder::Item::Type::CHAR) {
+            //   } else if (item->type == Item::Type::CHAR) {
             //     printf("Value: C %s %c\n", item->name, item->data.c);
-            //   } else if (item->type == Recorder::Item::Type::INT) {
+            //   } else if (item->type == Item::Type::INT) {
             //     printf("Value: I %s %ld\n", item->name, item->data.i);
             //   }
             ++idx;
@@ -105,7 +105,7 @@ main(int ac, char** av) {
         printf("Messages:     %ld (%.3fms)\n", count, duration_msec);
         printf("Messages/sec: %.1f (%.1fMiB/sec)\n",
                count * 1000 / duration_msec,
-               sizeof(Recorder::Item) * count * 1000 / (mib * duration_msec));
+               sizeof(Item) * count * 1000 / (mib * duration_msec));
       });
 
   Recorder::setContext(&ctx);
@@ -156,7 +156,7 @@ main(int ac, char** av) {
   auto num_messages = num_threads * 4 * (2 * num_rounds - 1);
   printf("Running %d threads, sending 4*%d records -> %d (%ldMiB)\n",
          num_threads, num_rounds, num_messages,
-         (num_messages * sizeof(Recorder::Item))/(1024*1024));
+         (num_messages * sizeof(Item))/(1024*1024));
 
   std::vector<std::thread> recorders;
   for (int i = 0; i < num_threads; ++i) {

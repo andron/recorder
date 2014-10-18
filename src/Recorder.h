@@ -38,30 +38,31 @@ class context_t;
 class socket_t;
 }
 
+// Recording item being passed around.
+// -------------------------------------------------------------------------
+struct __attribute__((packed)) Item {
+  enum class Type : std::int8_t
+  { INIT, OTHER, CHAR, INT, UINT, FLOAT, STR, };
+  Type type;
+  int64_t time;
+  union Data {
+    char     c;
+    char     s[sizeof(int64_t)];
+    int64_t  i;
+    uint64_t u;
+    double   d;
+  } data;
+  char name[4];
+  char unit[4];
+
+  Item();
+  Item(std::string const& name, std::string const& unit);
+  std::string toString() const;
+};
+// -------------------------------------------------------------------------
+
 class Recorder {
  public:
-  // Recording item being passed around.
-  // -------------------------------------------------------------------------
-  struct __attribute__((packed)) Item {
-    enum class Type : std::int8_t
-    { INIT, OTHER, CHAR, INT, UINT, FLOAT, STR, };
-    Type type;
-    int64_t time;
-    union Data {
-      char     c;
-      char     s[sizeof(int64_t)];
-      int64_t  i;
-      uint64_t u;
-      double   d;
-    } data;
-    char name[4];
-    char unit[4];
-
-    Item();
-    Item(std::string const& name, std::string const& unit);
-    std::string toString() const;
-  };
-  // -------------------------------------------------------------------------
 
   Recorder() = delete;
   Recorder(Recorder const&) = delete;

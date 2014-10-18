@@ -44,34 +44,34 @@ void Error(char const* msg) { std::fprintf(stderr, "%s\n", msg); }
 
 //  Create a item from name, value and time paramters.
 //  Specialization for char const*
-Recorder::Item
-createItem(Recorder::Item const& clone,
+Item
+createItem(Item const& clone,
            int64_t const time,
            char const* value) {
-  Recorder::Item item;
+  Item item;
   std::memcpy(&item, &clone, sizeof(item));
   item.time = time;
-  item.type = Recorder::Item::Type::STR;
+  item.type = Item::Type::STR;
   strncpy(&item.data.s[0], &value[0], sizeof(item.data.s));
   return item;
 }
 
-template<typename T> Recorder::Item
-createItem(Recorder::Item const& clone,
+template<typename T> Item
+createItem(Item const& clone,
            int64_t const time,
            T const value) {
-  Recorder::Item item;
+  Item item;
   std::memcpy(&item, &clone, sizeof(item));
   item.time = time;
   if (std::is_same<char, T>::value) {
-    item.type   = Recorder::Item::Type::CHAR;
+    item.type   = Item::Type::CHAR;
     item.data.c = value;
   } else if (std::is_integral<T>::value) {
     if (std::is_signed<T>::value) {
-      item.type   = Recorder::Item::Type::INT;
+      item.type   = Item::Type::INT;
       item.data.i = value;
     } else if (std::is_unsigned<T>::value) {
-      item.type   = Recorder::Item::Type::UINT;
+      item.type   = Item::Type::UINT;
       item.data.u = value;
     } else {
       static_assert(
@@ -79,7 +79,7 @@ createItem(Recorder::Item const& clone,
           "Unknown signedness for integral type");
     }
   } else if (std::is_floating_point<T>::value) {
-    item.type   = Recorder::Item::Type::FLOAT;
+    item.type   = Item::Type::FLOAT;
     item.data.d = value;
   } else {
     static_assert(
@@ -111,7 +111,7 @@ template Recorder&
 Recorder::record<double>(std::string const& key, double value);
 
 
-Recorder::Item::Item()
+Item::Item()
     : type(Type::INIT)
     , time(-1) {
   memset(&data, 0, sizeof(data));
@@ -119,7 +119,7 @@ Recorder::Item::Item()
 
 
 std::string
-Recorder::Item::toString() const {
+Item::toString() const {
   char buffer[128];
   std::string name(this->name);
   std::string unit(this->unit);
@@ -152,7 +152,7 @@ Recorder::Item::toString() const {
 }
 
 
-Recorder::Item::Item(std::string const& n, std::string const& u)
+Item::Item(std::string const& n, std::string const& u)
     : Item() {
   if (n.length() > sizeof(name)) {
     Error("Maximum size of parameter name 8 chars, truncating");
