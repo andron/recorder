@@ -26,8 +26,6 @@
 
 #include "zmqutils.h"
 
-#include "proto/test.pb.h"
-
 #include <zmq.hpp>
 
 #include <string>
