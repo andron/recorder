@@ -43,19 +43,6 @@ int
 main(int ac, char** av) {
   zmq::context_t ctx(1);
 
-  char* buf = reinterpret_cast<char*>(malloc(32*1e6));
-
-  for (int i = 0; i < 3e5; ++i) {
-    Position p;
-    std::string str;
-    p.set_time(i * 0.1);
-    p.set_x(i * 1.0);
-    p.set_y(i * 2.0);
-    p.set_z(i * 4.0);
-    p.SerializeToString(&str);
-    memcpy(buf + i * p.ByteSize(), str.c_str(), str.length());
-  }
-
   std::string const addr("inproc://recorder");
   std::atomic<bool> running(true);
 
