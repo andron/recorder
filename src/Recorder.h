@@ -24,27 +24,27 @@
 
 #pragma once
 
-#include <cassert>
-#include <chrono>
+#include <array>
+#include <ctime>
 #include <cstdlib>
 #include <cstring>
 #include <memory>
 #include <string>
-#include <unordered_map>
-#include <vector>
 
 namespace zmq {
 class context_t;
 class socket_t;
 }
 
+
 // Recording item being passed around.
 // -------------------------------------------------------------------------
 struct __attribute__((packed)) Item {
-  enum class Type : std::int8_t
-  { INIT, OTHER, CHAR, INT, UINT, FLOAT, STR, };
+  enum class Type : std::int8_t { INIT, OTHER, CHAR, INT, UINT, FLOAT, STR, };
   Type type;
+
   int64_t time;
+
   union Data {
     char     c;
     char     s[sizeof(int64_t)];
@@ -52,64 +52,98 @@ struct __attribute__((packed)) Item {
     uint64_t u;
     double   d;
   } data;
-  char name[4];
+
+  char name[12];
   char unit[4];
 
   Item();
   Item(std::string const& name, std::string const& unit);
   std::string toString() const;
 };
-// -------------------------------------------------------------------------
 
-class Recorder {
+
+template<typename V> Item
+cloneItem(Item const& clone, int64_t const time, V const value);
+
+
+class RecorderCommon {
  public:
+  static int constexpr SEND_BUFFER_SIZE = 1<<10;
+  typedef std::array<Item, SEND_BUFFER_SIZE> SendBuffer;
 
-  Recorder() = delete;
-  Recorder(Recorder const&) = delete;
-  explicit Recorder(uint64_t id);
-  Recorder(uint64_t id, std::string const address);
-  ~Recorder();
+  explicit RecorderCommon(uint64_t id);
+  ~RecorderCommon();
+
+  //!  Set class context to use for ZeroMQ communication.
+  static void setContext(zmq::context_t* context);
+
+  //!  Set class socket address for ZeroMQ communication.
+  static void setAddress(std::string address);
+
+  void flushSendBuffer();
+  void record(Item const& item);
+
+ private:
+  std::unique_ptr<zmq::socket_t> socket_;
+
+  uint64_t identifier_;
+
+  static thread_local SendBuffer send_buffer;
+  static thread_local SendBuffer::size_type send_buffer_index;
+
+  static zmq::context_t* socket_context;
+  static std::string     socket_address;
+};
+
+
+template<typename K>
+class Recorder : public RecorderCommon {
+ public:
+  explicit Recorder(uint64_t id) : RecorderCommon(id) {}
+
+  typedef RecorderCommon Super;
+
+  ~Recorder() {}
+
+  Recorder(Recorder const&)             = delete;
+  Recorder& operator= (Recorder const&) = delete;
 
   //!  Setup parameter with key (name) and unit for recording. The unit
   //!  is a string which must be parsed at the receiving side. Calling
   //!  setup multiple times with the same key value will have no effect,
   //!  once setup the key and unit will be locked.
-  Recorder& setup(std::string const& key, std::string const& unit);
+  //!
+  //!  See the implementation for available instantiations of cloneItem.
+  Recorder& setup(K const& key,
+                  std::string const& name,
+                  std::string const& unit) {
+    items_[static_cast<size_t>(key)] = Item(name, unit);
+    return *this;
+  }
 
   //!  Record parameter with key, previously setup using setup(). The
   //!  value need not have the same type in each call but there will be
   //!  a difference between 1 (integer) and 1.0 (float) causing a new
   //!  recording event to occur.
-  //!
-  //!  See implementation for available specializations.
-  template<typename T>
-  Recorder& record(std::string const& key, T const value);
-
-  //!  Explicitly flush send buffer, full or not.
-  void flushSendBuffer();
-
-  //!  Set class context to use for ZeroMQ communication.
-  static void setContext(zmq::context_t* ctx);
-
-  //!  Set class socket address for ZeroMQ communication.
-  static void setAddress(std::string address);
+  template<typename V>
+  Recorder& record(K const& key, V const value) {
+    auto const time = std::time(nullptr);
+    auto& item = items_[static_cast<size_t>(key)];
+    if (item.type == Item::Type::INIT) {
+      item = cloneItem(item, time, value);
+      Super::record(item);
+    } else if (std::memcmp(&(item.data), &value, sizeof(value))) {
+      item.time = time;
+      Super::record(item);
+      item = cloneItem(item, time, value);
+      Super::record(item);
+    } else {
+      // Ignore unchanged value
+    }
+    return *this;
+  }
 
  private:
-  void send(Item const& item);
-
-  //  TODO: Test using a int key instead of string for performance.
-  typedef std::unordered_map<std::string, Item> ItemContainer;
-  ItemContainer items_;
-
-  typedef std::array<Item, 1<<10> SendBuffer;
-  SendBuffer send_buffer_;
-  SendBuffer::size_type send_buffer_index_;
-
-  std::unique_ptr<zmq::socket_t> socket_;
-  std::string socket_address_;
-  uint64_t identifier_;
-
-  static zmq::context_t* socket_context;
-  static std::string     socket_address;
-
+  //!  Local storage for recorder.
+  std::array<Item, static_cast<size_t>(K::Count)> items_;
 };

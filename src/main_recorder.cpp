@@ -86,6 +86,11 @@ main(int ac, char** av) {
       });
 
 
+  RecorderCommon::setContext(&ctx);
+  RecorderCommon::setAddress(addr);
+
+  enum class FOO { A, B, C, D, Count };
+
   int num_threads  = 4;
   if (ac > 1)
     num_threads = std::atoi(av[1]);
@@ -112,17 +117,17 @@ main(int ac, char** av) {
           snprintf(name3, sizeof(name3), "C%02d", i);
           snprintf(name4, sizeof(name4), "D%02d", i);
 
-          Recorder rec(i);
-          rec.setup(name1, "m");
-          rec.setup(name2, "ms");
-          rec.setup(name3, "kg");
-          rec.setup(name4, "m/s");
+          Recorder<FOO> rec(i);
+          rec.setup(FOO::A, name1, "m");
+          rec.setup(FOO::B, name2, "ms");
+          rec.setup(FOO::C, name3, "kg");
+          rec.setup(FOO::D, name4, "m/s");
 
           for (int j = 0; j < num_rounds; ++j) {
-            rec.record(name1, j);
-            rec.record(name2, 1.0/j);
-            rec.record(name3, j*j);
-            rec.record(name4, std::log(j));
+            rec.record(FOO::A, char(j));
+            rec.record(FOO::B, 1.0/j);
+            rec.record(FOO::C, j*j);
+            rec.record(FOO::D, std::log(j));
           }
         }));
   }
