@@ -49,35 +49,6 @@ poll(zmq_pollitem_t* items) {
   }
 }
 
-// inline int
-// send(void* socket, QByteArray const& msg) {
-//   zmq_msg_t z_msg;
-//   zmq_msg_init_size(&z_msg, msg.size());
-//   memcpy(zmq_msg_data(&z_msg), msg.data(), msg.size());
-//   int rval = zmq_send(socket, &z_msg, 0);
-//   if (rval != 0) {
-//     perror("zmq_send");
-//   }
-//   zmq_msg_close(&z_msg);
-//   return rval;
-// }
-
-// inline int
-// recv(void* socket, QByteArray* msg, int options = 0) {
-//   zmq_msg_t z_msg;
-//   zmq_msg_init(&z_msg);
-//   int rval = zmq_recv(socket, &z_msg, options);
-//   if (rval != 0) {
-//     perror("zmq_recv");
-//     zmq_msg_close(&z_msg);
-//     return rval;
-//   }
-//   msg->resize(zmq_msg_size(&z_msg));
-//   memcpy(msg->data(), zmq_msg_data(&z_msg), msg->size());
-//   zmq_msg_close(&z_msg);
-//   return rval;
-// }
-
 typedef std::function<void(zmq::socket_t*, char const*)> socket_func;
 
 static socket_func fconnect = &zmq::socket_t::connect;

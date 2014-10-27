@@ -24,6 +24,8 @@
 
 #include "Recorder.h"
 
+#include "RecorderHDF5.h"
+
 #include "zmqutils.h"
 
 #include <zmq.hpp>
@@ -44,50 +46,12 @@ main(int ac, char** av) {
   zmq::context_t ctx(1);
 
   std::string const addr("inproc://recorder");
-  std::atomic<bool> running(true);
-
-  float duration_msec;
-
-  std::thread puller = std::thread(
-      [&ctx, &running, &duration_msec, addr] {
-        auto t1 = std::chrono::high_resolution_clock::now();
-        zmq::socket_t sock(ctx, ZMQ_PULL);
-        zmqutils::bind(&sock, addr);
-        zmq::message_t zmsg(256);
-        bool messages_to_process = true;
-        int64_t count = 0;
-        zmq_pollitem_t pollitems[] = { { sock, 0, ZMQ_POLLIN, 0 } };
-        while (running.load() || messages_to_process) {
-          if (!zmqutils::poll(pollitems)) {
-            messages_to_process = false;
-            continue;
-          }
-
-          sock.recv(&zmsg);
-          auto num_params = zmsg.size() / sizeof(Item);
-          count += num_params;
-
-          size_t idx = 0;
-          while (idx < (zmsg.size()/sizeof(Item))) {
-            ++idx;
-          }
-        }
-        sock.close();
-
-        auto mib = 1<<20;
-
-        auto t2 = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<usec>(t2 - t1);
-        duration_msec = duration.count()/1000.0;
-        printf("Messages:     %ld (%.3fms)\n", count, duration_msec);
-        printf("Messages/sec: %.1f (%.1fMiB/sec)\n",
-               count * 1000 / duration_msec,
-               sizeof(Item) * count * 1000 / (mib * duration_msec));
-      });
-
 
   RecorderCommon::setContext(&ctx);
   RecorderCommon::setAddress(addr);
+
+  RecorderHDF5 backend;
+  backend.start();
 
   enum class FOO { A, B, C, D, Count };
 
@@ -139,10 +103,7 @@ main(int ac, char** av) {
 
   std::this_thread::sleep_for(msec(1));
 
-  running.store(false);
-
-  if (puller.joinable())
-    puller.join();
+  backend.stop();
 
   return 0;
 }

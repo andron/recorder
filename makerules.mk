@@ -15,7 +15,12 @@ _LDFLAGS  := -rdynamic -Wl,-rpath=../lib -Wl,-rpath=./lib -Wl,-rpath=$(TGTDIR)
 
 TARGETS := recordertest servertest foo
 
-recordertest_SRCS := src/main_recorder.cpp src/Recorder.cpp
+recordertest_SRCS := \
+	src/main_recorder.cpp \
+	src/Recorder.cpp \
+	src/RecorderItem.cpp \
+	src/RecorderHDF5.cpp
+
 recordertest_USES := zeromq protobuf
 recordertest_LINK := zmq protobuf pthread
 

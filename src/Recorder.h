@@ -31,6 +31,7 @@
 #include <memory>
 #include <string>
 
+
 namespace zmq {
 class context_t;
 class socket_t;
@@ -71,7 +72,7 @@ class RecorderCommon {
   static int constexpr SEND_BUFFER_SIZE = 1<<10;
   typedef std::array<Item, SEND_BUFFER_SIZE> SendBuffer;
 
-  explicit RecorderCommon(uint64_t id);
+  RecorderCommon();
   ~RecorderCommon();
 
   //!  Set class context to use for ZeroMQ communication.
@@ -80,29 +81,30 @@ class RecorderCommon {
   //!  Set class socket address for ZeroMQ communication.
   static void setAddress(std::string address);
 
+  //!  Get socket address.
+  std::string getAddress() const;
+
   void flushSendBuffer();
+
   void record(Item const& item);
+
+ protected:
+  static zmq::context_t* socket_context;
+  static std::string     socket_address;
 
  private:
   std::unique_ptr<zmq::socket_t> socket_;
-
-  uint64_t identifier_;
-
   static thread_local SendBuffer send_buffer;
   static thread_local SendBuffer::size_type send_buffer_index;
-
-  static zmq::context_t* socket_context;
-  static std::string     socket_address;
 };
 
 
 template<typename K>
 class Recorder : public RecorderCommon {
  public:
-  explicit Recorder(uint64_t id) : RecorderCommon(id) {}
-
   typedef RecorderCommon Super;
 
+  explicit Recorder(uint64_t id) : RecorderCommon(), id_(id) {}
   ~Recorder() {}
 
   Recorder(Recorder const&)             = delete;
@@ -138,12 +140,15 @@ class Recorder : public RecorderCommon {
       item = cloneItem(item, time, value);
       Super::record(item);
     } else {
-      // Ignore unchanged value
+      //  Ignore unchanged value
     }
     return *this;
   }
 
  private:
+  //!  Local identifier for the recorder.
+  uint64_t id_;
+
   //!  Local storage for recorder.
   std::array<Item, static_cast<size_t>(K::Count)> items_;
 };

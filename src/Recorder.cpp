@@ -110,55 +110,6 @@ cloneItem(Item const& clone,
 //  -------------------------------------------------------------------------
 
 
-//  Item
-//  ----------------------------------------------------------------------
-Item::Item()
-    : type(Type::INIT)
-    , time(-1) {
-  std::memset(&data, 0, sizeof(data));
-}
-
-Item::Item(std::string const& n, std::string const& u)
-    : Item() {
-  std::strncpy(name, n.c_str(), sizeof(name));
-  std::strncpy(unit, u.c_str(), sizeof(unit));
-}
-
-std::string
-Item::toString() const {
-  char buffer[128];
-  std::string name(this->name);
-  std::string unit(this->unit);
-  unit = "[" + unit + "]";
-  snprintf(buffer, sizeof(buffer), "%ld %10s = ", this->time, name.c_str());
-  switch (this->type) {
-    case Type::CHAR:
-      snprintf(buffer, sizeof(buffer), "%c", data.c);
-      break;
-    case Type::INT:
-      snprintf(buffer, sizeof(buffer), "%ld", data.i);
-      break;
-    case Type::UINT:
-      snprintf(buffer, sizeof(buffer), "%lu", data.u);
-      break;
-    case Type::FLOAT:
-      snprintf(buffer, sizeof(buffer), "%f", data.d);
-      break;
-    case Type::STR:
-      {
-        std::string str(data.s, sizeof(data.s));
-        snprintf(buffer, sizeof(buffer), "%s", str.c_str());
-      }
-      break;
-    default:
-      break;
-  }
-  snprintf(buffer, 2 + sizeof(this->unit), "%s\n", unit.c_str());
-  return std::string(buffer);
-}
-//  ----------------------------------------------------------------------
-
-
 //!  Set class context to use for ZeroMQ communication.
 void RecorderCommon::setContext(zmq::context_t* context) {
   socket_context = context;
@@ -179,8 +130,7 @@ RecorderCommon::send_buffer;
 thread_local RecorderCommon::SendBuffer::size_type
 RecorderCommon::send_buffer_index = 0;
 
-RecorderCommon::RecorderCommon(uint64_t id)
-    : identifier_(id) {
+RecorderCommon::RecorderCommon() {
   bool error = false;
 
   if (RecorderCommon::socket_context == nullptr) {
@@ -211,6 +161,12 @@ RecorderCommon::~RecorderCommon() {
   flushSendBuffer();
   socket_->close();
   socket_.reset();
+}
+
+
+std::string
+RecorderCommon::getAddress() const {
+  return RecorderCommon::socket_address;
 }
 
 
