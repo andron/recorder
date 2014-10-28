@@ -24,10 +24,6 @@
 
 #include "Recorder.h"
 
-#include "zmqutils.h"
-
-#include <zmq.hpp>
-
 #include <algorithm>
 #include <cassert>
 #include <cstdlib>
@@ -36,13 +32,18 @@
 #include <string>
 #include <type_traits>
 
+#include <zmq.hpp>
+
+#include "zmqutils.h"
+
+
 namespace {
 void Error(char const* msg) { std::fprintf(stderr, "%s\n", msg); }
 }
 
 
-//  Clone functions for aritmetic types
-//  -------------------------------------------------------------------------
+// Clone functions for Item
+// ----------------------------------------------------------------------------
 template Item
 cloneItem<char>(Item const&, int64_t const, char const);
 
@@ -107,15 +108,15 @@ cloneItem(Item const& clone,
   }
   return item;
 }
-//  -------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 
 
-//!  Set class context to use for ZeroMQ communication.
+// Static definitions for RecorderCommon
+// ----------------------------------------------------------------------------
 void RecorderCommon::setContext(zmq::context_t* context) {
   socket_context = context;
 }
 
-//!  Set class socket address for ZeroMQ communication.
 void RecorderCommon::setAddress(std::string address) {
   printf("Address: %s\n", address.c_str());
   socket_address = address;
@@ -124,13 +125,16 @@ void RecorderCommon::setAddress(std::string address) {
 zmq::context_t* RecorderCommon::socket_context = nullptr;
 std::string     RecorderCommon::socket_address = "";
 
-thread_local RecorderCommon::SendBuffer
-RecorderCommon::send_buffer;
+thread_local
+RecorderCommon::SendBuffer RecorderCommon::send_buffer;
 
-thread_local RecorderCommon::SendBuffer::size_type
-RecorderCommon::send_buffer_index = 0;
+thread_local
+RecorderCommon::SendBuffer::size_type RecorderCommon::send_buffer_index = 0;
+// ----------------------------------------------------------------------------
 
-RecorderCommon::RecorderCommon() {
+
+RecorderCommon::RecorderCommon(uint64_t id)
+    : id_(id) {
   bool error = false;
 
   if (RecorderCommon::socket_context == nullptr) {
@@ -160,20 +164,18 @@ RecorderCommon::RecorderCommon() {
 RecorderCommon::~RecorderCommon() {
   flushSendBuffer();
   socket_->close();
-  socket_.reset();
 }
-
 
 std::string
 RecorderCommon::getAddress() const {
   return RecorderCommon::socket_address;
 }
 
-
 void
 RecorderCommon::flushSendBuffer() {
   constexpr auto item_size = sizeof(decltype(send_buffer)::value_type);
   if (send_buffer_index > 0) {
+    socket_->send(&id_, sizeof(id_), ZMQ_SNDMORE);
     socket_->send(send_buffer.data(), send_buffer_index * item_size);
     send_buffer_index = 0;
   }

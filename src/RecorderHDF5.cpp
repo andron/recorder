@@ -34,7 +34,8 @@
 typedef std::chrono::milliseconds msec;
 typedef std::chrono::microseconds usec;
 
-RecorderHDF5::RecorderHDF5() {
+RecorderHDF5::RecorderHDF5()
+    : RecorderCommon(0) {
 }
 
 RecorderHDF5::~RecorderHDF5() {
@@ -73,6 +74,9 @@ RecorderHDF5::run() {
       messages_to_process = false;
       continue;
     }
+
+    sock.recv(&zmsg);
+    uint64_t id = *reinterpret_cast<uint64_t*>(zmsg.data());
 
     sock.recv(&zmsg);
     auto num_params = zmsg.size() / sizeof(Item);

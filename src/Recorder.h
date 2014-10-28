@@ -39,7 +39,7 @@ class socket_t;
 
 
 // Recording item being passed around.
-// -------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 struct __attribute__((packed)) Item {
   enum class Type : std::int8_t { INIT, OTHER, CHAR, INT, UINT, FLOAT, STR, };
   Type type;
@@ -54,13 +54,16 @@ struct __attribute__((packed)) Item {
     double   d;
   } data;
 
-  char name[12];
+  char name[11];
   char unit[4];
 
   Item();
   Item(std::string const& name, std::string const& unit);
   std::string toString() const;
 };
+static_assert((((sizeof(Item) << 1)-1) & sizeof(Item)) == sizeof(Item),
+              "Size of Item shall be power of 2");
+// ----------------------------------------------------------------------------
 
 
 template<typename V> Item
@@ -69,10 +72,13 @@ cloneItem(Item const& clone, int64_t const time, V const value);
 
 class RecorderCommon {
  public:
+  RecorderCommon(RecorderCommon const&) = delete;
+  RecorderCommon& operator= (RecorderCommon const&) = delete;
+
   static int constexpr SEND_BUFFER_SIZE = 1<<10;
   typedef std::array<Item, SEND_BUFFER_SIZE> SendBuffer;
 
-  RecorderCommon();
+  explicit RecorderCommon(uint64_t id);
   ~RecorderCommon();
 
   //!  Set class context to use for ZeroMQ communication.
@@ -86,13 +92,18 @@ class RecorderCommon {
 
   void flushSendBuffer();
 
-  void record(Item const& item);
+  virtual void record(Item const& item);
 
  protected:
   static zmq::context_t* socket_context;
   static std::string     socket_address;
 
  private:
+  // Local identifier for the recorder. This goes into the first frame
+  // of the zeromq message for the backend to use as filtering and
+  // sorting identification.
+  uint64_t const id_;
+
   std::unique_ptr<zmq::socket_t> socket_;
   static thread_local SendBuffer send_buffer;
   static thread_local SendBuffer::size_type send_buffer_index;
@@ -102,20 +113,24 @@ class RecorderCommon {
 template<typename K>
 class Recorder : public RecorderCommon {
  public:
-  typedef RecorderCommon Super;
-
-  explicit Recorder(uint64_t id) : RecorderCommon(), id_(id) {}
-  ~Recorder() {}
-
-  Recorder(Recorder const&)             = delete;
+  Recorder(Recorder const&) = delete;
   Recorder& operator= (Recorder const&) = delete;
 
-  //!  Setup parameter with key (name) and unit for recording. The unit
-  //!  is a string which must be parsed at the receiving side. Calling
-  //!  setup multiple times with the same key value will have no effect,
-  //!  once setup the key and unit will be locked.
-  //!
-  //!  See the implementation for available instantiations of cloneItem.
+  typedef RecorderCommon Super;
+
+  explicit Recorder(uint64_t id)
+      : RecorderCommon(id) {
+  }
+
+  ~Recorder() {
+  }
+
+  // Setup parameter with key (name) and unit for recording. The unit is
+  // a string which must be parsed at the receiving side. Calling setup
+  // multiple times with the same key value will have no effect, once
+  // setup the key and unit will be locked.
+  //
+  // See the implementation for available instantiations of cloneItem.
   Recorder& setup(K const& key,
                   std::string const& name,
                   std::string const& unit) {
@@ -123,10 +138,10 @@ class Recorder : public RecorderCommon {
     return *this;
   }
 
-  //!  Record parameter with key, previously setup using setup(). The
-  //!  value need not have the same type in each call but there will be
-  //!  a difference between 1 (integer) and 1.0 (float) causing a new
-  //!  recording event to occur.
+  // Record parameter with key, previously setup using setup(). The
+  // value need not have the same type in each call but there will be a
+  // difference between 1 (integer) and 1.0 (float) causing a new
+  // recording event to occur.
   template<typename V>
   Recorder& record(K const& key, V const value) {
     auto const time = std::time(nullptr);
@@ -140,15 +155,14 @@ class Recorder : public RecorderCommon {
       item = cloneItem(item, time, value);
       Super::record(item);
     } else {
-      //  Ignore unchanged value
+      // Ignore unchanged value
     }
     return *this;
   }
 
  private:
-  //!  Local identifier for the recorder.
-  uint64_t id_;
-
-  //!  Local storage for recorder.
+  // Local storage for recorder. Each recorded item is appended to the
+  // array and when it is full it is copied to a zeromq message buffer
+  // for transport.
   std::array<Item, static_cast<size_t>(K::Count)> items_;
 };

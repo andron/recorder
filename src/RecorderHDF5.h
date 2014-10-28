@@ -35,8 +35,12 @@ class context_t;
 
 class RecorderHDF5 : public RecorderCommon {
  public:
+  RecorderHDF5(RecorderHDF5 const&) = delete;
+  RecorderHDF5& operator=(RecorderHDF5 const&) = delete;
+
   RecorderHDF5();
   ~RecorderHDF5();
+
   void start();
   void stop();
 

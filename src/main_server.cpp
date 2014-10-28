@@ -161,7 +161,7 @@ class StateServer {
     //std::lock_guard<std::mutex> lock(clients_mutex_);
     clients_.push_back(cs);
 
-    auto const address = zmqutils::get_address(*cs->socket.get());
+    auto const address = zmqutils::get_address(cs->socket.get());
     std::stringstream ss;
     ss << client_id << " " << address;
     (*reply) = ss.str();
@@ -241,7 +241,6 @@ class StateServer {
 
 int
 main(int, char**) {
-
   zmq::context_t ctx(1);
 
   StateServer server(&ctx);

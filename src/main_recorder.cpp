@@ -30,11 +30,12 @@
 
 #include <zmq.hpp>
 
-#include <string>
 #include <atomic>
-#include <thread>
-#include <cstdlib>
 #include <chrono>
+#include <cstdlib>
+#include <string>
+#include <thread>
+#include <vector>
 
 namespace {
 typedef std::chrono::milliseconds msec;
@@ -49,6 +50,8 @@ main(int ac, char** av) {
 
   RecorderCommon::setContext(&ctx);
   RecorderCommon::setAddress(addr);
+
+  printf("Item size: %lu\n", sizeof(Item));
 
   RecorderHDF5 backend;
   backend.start();
@@ -88,7 +91,7 @@ main(int ac, char** av) {
           rec.setup(FOO::D, name4, "m/s");
 
           for (int j = 0; j < num_rounds; ++j) {
-            rec.record(FOO::A, char(j));
+            rec.record(FOO::A, *reinterpret_cast<char*>(&j));
             rec.record(FOO::B, 1.0/j);
             rec.record(FOO::C, j*j);
             rec.record(FOO::D, std::log(j));

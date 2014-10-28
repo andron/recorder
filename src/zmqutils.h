@@ -26,8 +26,9 @@
 
 #include <zmq.hpp>
 
-#include <string>
 #include <memory>
+#include <string>
+#include <vector>
 
 namespace zmqutils {
 
@@ -88,10 +89,10 @@ to_message(std::string const&) {
 }
 
 inline std::string
-get_address(zmq::socket_t& zsock) {
+get_address(zmq::socket_t* zsock) {
   std::vector<char> optbuf(256);
   auto optlen = optbuf.size();
-  zsock.getsockopt(ZMQ_LAST_ENDPOINT, static_cast<void*>(&optbuf[0]), &optlen);
+  zsock->getsockopt(ZMQ_LAST_ENDPOINT, static_cast<void*>(&optbuf[0]), &optlen);
   return std::string(optbuf.begin(), optbuf.begin() + optlen);
 }
 
