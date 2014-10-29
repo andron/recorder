@@ -44,69 +44,63 @@ void Error(char const* msg) { std::fprintf(stderr, "%s\n", msg); }
 
 // Clone functions for Item
 // ----------------------------------------------------------------------------
-template Item
-cloneItem<char>(Item const&, int64_t const, char const);
+template void
+updateItem<char>(Item*, int64_t const, char const);
 
-template Item
-cloneItem<int32_t>(Item const&, int64_t const, int32_t const);
+template void
+updateItem<int32_t>(Item*, int64_t const, int32_t const);
 
-template Item
-cloneItem<int64_t>(Item const&, int64_t const, int64_t const);
+template void
+updateItem<int64_t>(Item*, int64_t const, int64_t const);
 
-template Item
-cloneItem<uint32_t>(Item const&, int64_t const, uint32_t const);
+template void
+updateItem<uint32_t>(Item*, int64_t const, uint32_t const);
 
-template Item
-cloneItem<uint64_t>(Item const&, int64_t const, uint64_t const);
+template void
+updateItem<uint64_t>(Item*, int64_t const, uint64_t const);
 
-template Item
-cloneItem<double>(Item const&, int64_t const, double const);
+template void
+updateItem<double>(Item*, int64_t const, double const);
 
 
-template<> Item
-cloneItem<char const*>(Item const& clone,
-                       int64_t const time,
-                       char const* value) {
-  Item item;
-  std::memcpy(&item, &clone, sizeof(item));
-  item.time = time;
-  item.type = Item::Type::STR;
-  std::strncpy(&item.data.s[0], &value[0], sizeof(item.data.s));
-  return item;
+template<> void
+updateItem<char const*>(Item* item,
+                        int64_t const time,
+                        char const* value) {
+  item->time = time;
+  item->type = Item::Type::STR;
+  std::strncpy(&item->data.s[0], &value[0], sizeof(item->data.s));
 }
 
-template<typename V> Item
-cloneItem(Item const& clone,
-          int64_t const time,
-          V const value) {
-  Item item;
-  std::memcpy(&item, &clone, sizeof(item));
-  item.time = time;
+template<typename V> void
+updateItem(Item* item,
+           int64_t const time,
+           V const value) {
+  item->time = time;
   if (std::is_same<char, V>::value) {
-    item.type   = Item::Type::CHAR;
-    item.data.c = value;
+    item->type   = Item::Type::CHAR;
+    item->data.c = value;
   } else if (std::is_integral<V>::value) {
     if (std::is_signed<V>::value) {
-      item.type   = Item::Type::INT;
-      item.data.i = value;
+      item->type   = Item::Type::INT;
+      item->data.i = value;
     } else if (std::is_unsigned<V>::value) {
-      item.type   = Item::Type::UINT;
-      item.data.u = value;
+      item->type   = Item::Type::UINT;
+      item->data.u = value;
     } else {
       static_assert(
           std::is_signed<V>::value || std::is_unsigned<V>::value,
           "Unknown signedness for integral type (?)");
     }
   } else if (std::is_floating_point<V>::value) {
-    item.type   = Item::Type::FLOAT;
-    item.data.d = value;
+    item->type   = Item::Type::FLOAT;
+    item->data.d = value;
   } else {
-    item.type   = Item::Type::OTHER;
-    std::memcpy(&item.data,
+    item->type   = Item::Type::OTHER;
+    std::memcpy(&item->data,
                 &value,
-                std::min(sizeof(value), sizeof(item.data)));
+                std::min(sizeof(value), sizeof(item->data)));
   }
-  return item;
 }
 // ----------------------------------------------------------------------------
 

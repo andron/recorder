@@ -66,8 +66,8 @@ static_assert((((sizeof(Item) << 1)-1) & sizeof(Item)) == sizeof(Item),
 // ----------------------------------------------------------------------------
 
 
-template<typename V> Item
-cloneItem(Item const& clone, int64_t const time, V const value);
+template<typename V> void
+updateItem(Item* item, int64_t const time, V const value);
 
 
 class RecorderCommon {
@@ -130,7 +130,7 @@ class Recorder : public RecorderCommon {
   // multiple times with the same key value will have no effect, once
   // setup the key and unit will be locked.
   //
-  // See the implementation for available instantiations of cloneItem.
+  // See the implementation for available instantiations of updateItem.
   Recorder& setup(K const& key,
                   std::string const& name,
                   std::string const& unit) {
@@ -147,12 +147,12 @@ class Recorder : public RecorderCommon {
     auto const time = std::time(nullptr);
     auto& item = items_[static_cast<size_t>(key)];
     if (item.type == Item::Type::INIT) {
-      item = cloneItem(item, time, value);
+      updateItem(&item, time, value);
       Super::record(item);
     } else if (std::memcmp(&(item.data), &value, sizeof(value))) {
       item.time = time;
       Super::record(item);
-      item = cloneItem(item, time, value);
+      updateItem(&item, time, value);
       Super::record(item);
     } else {
       // Ignore unchanged value
