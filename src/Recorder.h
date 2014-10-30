@@ -92,7 +92,7 @@ class RecorderCommon {
 
   void flushSendBuffer();
 
-  virtual void record(Item const& item);
+  void record(Item const& item);
 
  protected:
   static zmq::context_t* socket_context;
