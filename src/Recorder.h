@@ -40,12 +40,30 @@ class socket_t;
 
 // Recording item being passed around.
 // ----------------------------------------------------------------------------
+enum class ItemType : std::int16_t { INIT, OTHER, CHAR, INT, UINT, FLOAT, STR, };
+
+struct __attribute__((packed)) ItemInit {
+  ItemInit(int16_t key,
+           std::string const& name,
+           std::string const& unit,
+           std::string const& desc);
+
+  int16_t key;
+  char name[32];
+  char unit[32];
+  char desc[190];
+};
+static_assert((((sizeof(ItemInit) << 1)-1) & sizeof(ItemInit))
+              == sizeof(ItemInit),
+              "Size of ItemInit shall be power of 2");
+
 struct __attribute__((packed)) Item {
-  enum class Type : std::int8_t { INIT, OTHER, CHAR, INT, UINT, FLOAT, STR, };
-  Type type;
+  Item();
+  explicit Item(int16_t key);
 
-  int64_t time;
-
+  int16_t key;
+  ItemType type;
+  int32_t time;
   union Data {
     char     c;
     char     s[sizeof(int64_t)];
@@ -53,15 +71,9 @@ struct __attribute__((packed)) Item {
     uint64_t u;
     double   d;
   } data;
-
-  char name[11];
-  char unit[4];
-
-  Item();
-  Item(std::string const& name, std::string const& unit);
-  std::string toString() const;
 };
-static_assert((((sizeof(Item) << 1)-1) & sizeof(Item)) == sizeof(Item),
+static_assert((((sizeof(Item) << 1)-1) & sizeof(Item))
+              == sizeof(Item),
               "Size of Item shall be power of 2");
 // ----------------------------------------------------------------------------
 
@@ -91,6 +103,8 @@ class RecorderCommon {
   std::string getAddress() const;
 
   void flushSendBuffer();
+
+  void setup(ItemInit const& iteminit);
 
   void record(Item const& item);
 
@@ -131,10 +145,13 @@ class Recorder : public RecorderCommon {
   // setup the key and unit will be locked.
   //
   // See the implementation for available instantiations of updateItem.
-  Recorder& setup(K const& key,
+  Recorder& setup(K const KEY,
                   std::string const& name,
-                  std::string const& unit) {
-    items_[static_cast<size_t>(key)] = Item(name, unit);
+                  std::string const& unit,
+                  std::string const& desc = "N/A") {
+    auto const key = static_cast<decltype(Item::key)>(KEY);
+    items_[key] = Item(key);
+    Super::setup(ItemInit(key, name, unit, desc));
     return *this;
   }
 
@@ -143,10 +160,10 @@ class Recorder : public RecorderCommon {
   // difference between 1 (integer) and 1.0 (float) causing a new
   // recording event to occur.
   template<typename V>
-  Recorder& record(K const& key, V const value) {
+  Recorder& record(K const key, V const value) {
     auto const time = std::time(nullptr);
     auto& item = items_[static_cast<size_t>(key)];
-    if (item.type == Item::Type::INIT) {
+    if (item.type == ItemType::INIT) {
       updateItem(&item, time, value);
       Super::record(item);
     } else if (std::memcmp(&(item.data), &value, sizeof(value))) {

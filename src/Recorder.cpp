@@ -66,7 +66,7 @@ updateItem<double>(Item*, int64_t const, double const);
 template<> void
 updateItem<char const*>(Item* item, int64_t const time, char const* value) {
   item->time = time;
-  item->type = Item::Type::STR;
+  item->type = ItemType::STR;
   std::strncpy(&item->data.s[0], &value[0], sizeof(item->data.s));
 }
 
@@ -74,14 +74,14 @@ template<typename V> void
 updateItem(Item* item, int64_t const time, V const value) {
   item->time = time;
   if (std::is_same<char, V>::value) {
-    item->type   = Item::Type::CHAR;
+    item->type   = ItemType::CHAR;
     item->data.c = value;
   } else if (std::is_integral<V>::value) {
     if (std::is_signed<V>::value) {
-      item->type   = Item::Type::INT;
+      item->type   = ItemType::INT;
       item->data.i = value;
     } else if (std::is_unsigned<V>::value) {
-      item->type   = Item::Type::UINT;
+      item->type   = ItemType::UINT;
       item->data.u = value;
     } else {
       static_assert(
@@ -89,10 +89,10 @@ updateItem(Item* item, int64_t const time, V const value) {
           "Unknown signedness for integral type (?)");
     }
   } else if (std::is_floating_point<V>::value) {
-    item->type   = Item::Type::FLOAT;
+    item->type   = ItemType::FLOAT;
     item->data.d = value;
   } else {
-    item->type   = Item::Type::OTHER;
+    item->type   = ItemType::OTHER;
     std::memcpy(&item->data,
                 &value,
                 std::min(sizeof(value), sizeof(item->data)));
@@ -163,12 +163,22 @@ RecorderCommon::getAddress() const {
 
 void
 RecorderCommon::flushSendBuffer() {
+  constexpr int8_t sendtype = 0;
   constexpr auto item_size = sizeof(decltype(send_buffer)::value_type);
   if (send_buffer_index > 0) {
     socket_->send(&id_, sizeof(id_), ZMQ_SNDMORE);
+    socket_->send(&sendtype, sizeof(sendtype), ZMQ_SNDMORE);
     socket_->send(send_buffer.data(), send_buffer_index * item_size);
     send_buffer_index = 0;
   }
+}
+
+void
+RecorderCommon::setup(ItemInit const& iteminit) {
+  constexpr int8_t sendtype = 1;
+  socket_->send(&id_, sizeof(id_), ZMQ_SNDMORE);
+  socket_->send(&sendtype, sizeof(sendtype), ZMQ_SNDMORE);
+  socket_->send(&iteminit, sizeof(iteminit));
 }
 
 void

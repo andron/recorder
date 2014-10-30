@@ -32,6 +32,13 @@
 
 namespace zmqutils {
 
+template<typename T> inline T
+pop(zmq::socket_t* socket, zmq::message_t* zmsg) {
+  socket->recv(zmsg);
+  T rval = *reinterpret_cast<T*>(zmsg->data());
+  return rval;
+}
+
 inline bool
 poll(zmq_pollitem_t* items) {
   constexpr static int POLL_INTERVALL = 100;

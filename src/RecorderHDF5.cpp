@@ -75,12 +75,18 @@ RecorderHDF5::run() {
       continue;
     }
 
-    sock.recv(&zmsg);
-    uint64_t id = *reinterpret_cast<uint64_t*>(zmsg.data());
+    auto id = zmqutils::pop<uint64_t>(&sock, &zmsg);
+    auto type = zmqutils::pop<int8_t>(&sock, &zmsg);
 
-    sock.recv(&zmsg);
-    auto num_params = zmsg.size() / sizeof(Item);
-    count += num_params;
+    if (type == 0) {
+      sock.recv(&zmsg);
+      auto num_params = zmsg.size() / sizeof(Item);
+      count += num_params;
+    } else if (type == 1) {
+      auto init = zmqutils::pop<ItemInit>(&sock, &zmsg);
+      printf("(%lu) Setup: '%s', '%s' : \"%s\"\n",
+             id, init.name, init.unit, init.desc);
+    }
 
     size_t idx = 0;
     while (idx < (zmsg.size()/sizeof(Item))) {

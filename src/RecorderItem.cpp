@@ -27,47 +27,24 @@
 #include <string>
 #include <cstdio>
 
+ItemInit::ItemInit(int16_t item_key,
+                   std::string const& item_name,
+                   std::string const& item_unit,
+                   std::string const& item_desc)
+    : key(item_key) {
+  std::strncpy(name, item_name.c_str(), sizeof(name));
+  std::strncpy(unit, item_unit.c_str(), sizeof(unit));
+  std::strncpy(desc, item_desc.c_str(), sizeof(desc));
+}
+
 Item::Item()
-    : type(Type::INIT)
+    : key(-1)
+    , type(ItemType::INIT)
     , time(-1) {
   std::memset(&data, 0, sizeof(data));
 }
 
-Item::Item(std::string const& n, std::string const& u)
+Item::Item(int16_t item_key)
     : Item() {
-  std::strncpy(name, n.c_str(), sizeof(name));
-  std::strncpy(unit, u.c_str(), sizeof(unit));
-}
-
-std::string
-Item::toString() const {
-  char buffer[128];
-  std::string name(this->name);
-  std::string unit(this->unit);
-  unit = "[" + unit + "]";
-  snprintf(buffer, sizeof(buffer), "%ld %10s = ", this->time, name.c_str());
-  switch (this->type) {
-    case Type::CHAR:
-      snprintf(buffer, sizeof(buffer), "%c", data.c);
-      break;
-    case Type::INT:
-      snprintf(buffer, sizeof(buffer), "%ld", data.i);
-      break;
-    case Type::UINT:
-      snprintf(buffer, sizeof(buffer), "%lu", data.u);
-      break;
-    case Type::FLOAT:
-      snprintf(buffer, sizeof(buffer), "%f", data.d);
-      break;
-    case Type::STR:
-      {
-        std::string str(data.s, sizeof(data.s));
-        snprintf(buffer, sizeof(buffer), "%s", str.c_str());
-      }
-      break;
-    default:
-      break;
-  }
-  snprintf(buffer, 2 + sizeof(this->unit), "%s\n", unit.c_str());
-  return std::string(buffer);
+  key = item_key;
 }
