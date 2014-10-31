@@ -76,7 +76,7 @@ RecorderHDF5::run() {
     }
 
     auto id = zmqutils::pop<uint64_t>(&sock, &zmsg);
-    auto type = zmqutils::pop<int8_t>(&sock, &zmsg);
+    auto type = zmqutils::pop<int16_t>(&sock, &zmsg);
 
     if (type == 0) {
       sock.recv(&zmsg);

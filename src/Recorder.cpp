@@ -163,7 +163,7 @@ RecorderCommon::getAddress() const {
 
 void
 RecorderCommon::flushSendBuffer() {
-  constexpr int8_t sendtype = 0;
+  constexpr int16_t sendtype = 0;
   constexpr auto item_size = sizeof(decltype(send_buffer)::value_type);
   if (send_buffer_index > 0) {
     socket_->send(&id_, sizeof(id_), ZMQ_SNDMORE);
@@ -175,7 +175,7 @@ RecorderCommon::flushSendBuffer() {
 
 void
 RecorderCommon::setup(ItemInit const& iteminit) {
-  constexpr int8_t sendtype = 1;
+  constexpr int16_t sendtype = 1;
   socket_->send(&id_, sizeof(id_), ZMQ_SNDMORE);
   socket_->send(&sendtype, sizeof(sendtype), ZMQ_SNDMORE);
   socket_->send(&iteminit, sizeof(iteminit));
