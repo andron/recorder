@@ -2,11 +2,13 @@
 
 include $(HEADER)
 
+ZEROMQ_HOME := /opt/zeromq/latest
+
 # --------------------------------------------------
 NAME     := zmqtest
 VERSION  := 1.0.0
 RELEASE  := 1
-REQUIRES := #
+REQUIRES := zeromq
 $(call setup)
 # --------------------------------------------------
 

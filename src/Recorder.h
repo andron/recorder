@@ -102,13 +102,13 @@ class RecorderCommon {
   //!  Get socket address.
   std::string getAddress() const;
 
+ protected:
   void flushSendBuffer();
 
   void setup(ItemInit const& iteminit);
 
   void record(Item const& item);
 
- protected:
   static zmq::context_t* socket_context;
   static std::string     socket_address;
 
