@@ -30,12 +30,13 @@
 #include <zmq.hpp>
 
 #include <chrono>
+#include <map>
 
 typedef std::chrono::milliseconds msec;
 typedef std::chrono::microseconds usec;
 
 RecorderHDF5::RecorderHDF5()
-    : RecorderCommon(0) {
+    : RecorderCommon(0, "HDF5Backend") {
 }
 
 RecorderHDF5::~RecorderHDF5() {

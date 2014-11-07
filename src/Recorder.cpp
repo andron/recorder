@@ -123,8 +123,9 @@ RecorderCommon::SendBuffer::size_type RecorderCommon::send_buffer_index = 0;
 // ----------------------------------------------------------------------------
 
 
-RecorderCommon::RecorderCommon(uint64_t id)
-    : id_(id) {
+RecorderCommon::RecorderCommon(int32_t id, std::string name)
+    : recorder_id_(id)
+    , recorder_name_(name) {
   bool error = false;
 
   if (RecorderCommon::socket_context == nullptr) {
@@ -166,7 +167,7 @@ RecorderCommon::flushSendBuffer() {
   constexpr int16_t sendtype = 0;
   constexpr auto item_size = sizeof(decltype(send_buffer)::value_type);
   if (send_buffer_index > 0) {
-    socket_->send(&id_, sizeof(id_), ZMQ_SNDMORE);
+    socket_->send(&recorder_id_, sizeof(recorder_id_), ZMQ_SNDMORE);
     socket_->send(&sendtype, sizeof(sendtype), ZMQ_SNDMORE);
     socket_->send(send_buffer.data(), send_buffer_index * item_size);
     send_buffer_index = 0;
@@ -176,7 +177,7 @@ RecorderCommon::flushSendBuffer() {
 void
 RecorderCommon::setup(ItemInit const& iteminit) {
   constexpr int16_t sendtype = 1;
-  socket_->send(&id_, sizeof(id_), ZMQ_SNDMORE);
+  socket_->send(&recorder_id_, sizeof(recorder_id_), ZMQ_SNDMORE);
   socket_->send(&sendtype, sizeof(sendtype), ZMQ_SNDMORE);
   socket_->send(&iteminit, sizeof(iteminit));
 }

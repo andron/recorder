@@ -90,7 +90,7 @@ class RecorderCommon {
   static int constexpr SEND_BUFFER_SIZE = 1<<10;
   typedef std::array<Item, SEND_BUFFER_SIZE> SendBuffer;
 
-  explicit RecorderCommon(uint64_t id);
+  RecorderCommon(int32_t id, std::string name);
   ~RecorderCommon();
 
   //!  Set class context to use for ZeroMQ communication.
@@ -116,7 +116,8 @@ class RecorderCommon {
   // Local identifier for the recorder. This goes into the first frame
   // of the zeromq message for the backend to use as filtering and
   // sorting identification.
-  uint64_t const id_;
+  int32_t const recorder_id_;
+  std::string const recorder_name_;
 
   std::unique_ptr<zmq::socket_t> socket_;
   static thread_local SendBuffer send_buffer;
@@ -132,8 +133,8 @@ class Recorder : public RecorderCommon {
 
   typedef RecorderCommon Super;
 
-  explicit Recorder(uint64_t id)
-      : RecorderCommon(id) {
+  Recorder(int32_t id, std::string name)
+      : Super(id, name) {
   }
 
   ~Recorder() {

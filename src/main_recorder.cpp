@@ -75,16 +75,18 @@ main(int ac, char** av) {
   for (int i = 0; i < num_threads; ++i) {
     recorders.emplace_back(std::thread(
         [&i, &num_rounds] {
+          char recorder_name[32];
           char name1[8];
           char name2[8];
           char name3[8];
           char name4[8];
+          snprintf(recorder_name, sizeof(recorder_name), "REC%04d", i);
           snprintf(name1, sizeof(name1), "A%02d", i);
           snprintf(name2, sizeof(name2), "B%02d", i);
           snprintf(name3, sizeof(name3), "C%02d", i);
           snprintf(name4, sizeof(name4), "D%02d", i);
 
-          Recorder<FOO> rec(i);
+          Recorder<FOO> rec(i, recorder_name);
           rec.setup(FOO::A, name1, "m");
           rec.setup(FOO::B, name2, "ms");
           rec.setup(FOO::C, name3, "kg");
