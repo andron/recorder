@@ -166,7 +166,7 @@ void
 RecorderCommon::flushSendBuffer() {
   constexpr auto item_size = sizeof(decltype(send_buffer)::value_type);
   if (send_buffer_index > 0) {
-    PayloadFrame const frame(recorder_id_, 1);
+    PayloadFrame const frame(recorder_id_, PayloadType::DATA);
     socket_->send(&frame, sizeof(frame), ZMQ_SNDMORE);
     socket_->send(send_buffer.data(), send_buffer_index * item_size);
     send_buffer_index = 0;
@@ -175,7 +175,7 @@ RecorderCommon::flushSendBuffer() {
 
 void
 RecorderCommon::setup(ItemInit const& iteminit) {
-  PayloadFrame const frame(recorder_id_, 0);
+  PayloadFrame const frame(recorder_id_, PayloadType::INIT_ITEM);
   socket_->send(&frame, sizeof(frame), ZMQ_SNDMORE);
   socket_->send(&iteminit, sizeof(iteminit));
 }

@@ -46,15 +46,15 @@ class socket_t;
 // Item being passed around on the ZeroMQ-bus.
 // ----------------------------------------------------------------------------
 enum class PayloadType : std::int32_t {
-  INIT_RECORDER, INIT_ITEM, DATA_ITEM, };
+  INIT_RECORDER, INIT_ITEM, DATA, };
 
 struct PACKED PayloadFrame {
-  PayloadFrame(int32_t id, int32_t type)
+  PayloadFrame(int32_t id, PayloadType type)
       : recorder_id(id)
       , payload_type(type) {
   }
   int32_t recorder_id;
-  int32_t payload_type;
+  PayloadType payload_type;
 };
 
 struct PACKED RecorderInit {

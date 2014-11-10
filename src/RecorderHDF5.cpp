@@ -68,6 +68,7 @@ RecorderHDF5::run() {
   zmqutils::bind(&sock, RecorderCommon::socket_address.c_str());
   zmq::message_t zmsg(1024);
   bool messages_to_process = true;
+  std::map<int32_t, int32_t> counter;
   int64_t count = 0;
   zmq_pollitem_t pollitems[] = { { sock, 0, ZMQ_POLLIN, 0 } };
   while (poller_running_.load() || messages_to_process) {
@@ -76,17 +77,19 @@ RecorderHDF5::run() {
       continue;
     }
 
-    auto id = zmqutils::pop<uint64_t>(&sock, &zmsg);
-    auto type = zmqutils::pop<int16_t>(&sock, &zmsg);
+    auto frame = zmqutils::pop<PayloadFrame>(&sock, &zmsg);
+    auto rec_id = frame.recorder_id;
 
-    if (type == 0) {
+    if (frame.payload_type == PayloadType::INIT_ITEM) {
+      auto init = zmqutils::pop<ItemInit>(&sock, &zmsg);
+      printf("(%04d) Setup: '%s', '%s' : \"%s\"\n",
+             rec_id, init.name, init.unit, init.desc);
+      counter.insert(std::make_pair(rec_id, 0));
+    } else if (frame.payload_type == PayloadType::DATA) {
       sock.recv(&zmsg);
       auto num_params = zmsg.size() / sizeof(Item);
       count += num_params;
-    } else if (type == 1) {
-      auto init = zmqutils::pop<ItemInit>(&sock, &zmsg);
-      printf("(%lu) Setup: '%s', '%s' : \"%s\"\n",
-             id, init.name, init.unit, init.desc);
+      counter[rec_id] += num_params;
     }
 
     size_t idx = 0;
@@ -105,4 +108,8 @@ RecorderHDF5::run() {
   printf("Messages/sec: %.1f (%.1fMiB/sec)\n",
          count * 1000 / duration_msec,
          sizeof(Item) * count * 1000 / (mib * duration_msec));
+
+  for (auto const item : counter) {
+    printf("  %4d : %d\n", item.first, item.second);
+  }
 }
