@@ -22,7 +22,7 @@
   THE SOFTWARE.
 */
 
-#include "Recorder.h"
+#include "RecorderCommon.h"
 
 #include <algorithm>
 #include <cassert>

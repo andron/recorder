@@ -19,7 +19,7 @@ TARGETS := recordertest servertest foo
 
 recordertest_SRCS := \
 	src/main_recorder.cpp \
-	src/Recorder.cpp \
+	src/RecorderCommon.cpp \
 	src/RecorderItem.cpp \
 	src/RecorderHDF5.cpp
 
