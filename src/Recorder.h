@@ -133,6 +133,8 @@ class RecorderCommon {
  protected:
   void flushSendBuffer();
 
+  void setupRecorder(int32_t max_size);
+
   void setup(ItemInit const& init);
 
   void record(Item const& item);
@@ -163,6 +165,7 @@ class Recorder : public RecorderCommon {
 
   Recorder(int32_t id, std::string name)
       : Super(id, name) {
+    Super::setupRecorder(items_.max_size());
   }
 
   ~Recorder() {

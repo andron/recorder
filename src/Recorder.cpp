@@ -176,6 +176,14 @@ RecorderCommon::flushSendBuffer() {
 }
 
 void
+RecorderCommon::setupRecorder(int32_t max_size) {
+  PayloadFrame const frame(recorder_id_, PayloadType::INIT_RECORDER);
+  RecorderInit const recorderinit(recorder_id_, max_size, recorder_name_);
+  socket_->send(&frame, sizeof(frame), ZMQ_SNDMORE);
+  socket_->send(&recorderinit, sizeof(recorderinit));
+}
+
+void
 RecorderCommon::setup(ItemInit const& iteminit) {
   PayloadFrame const frame(recorder_id_, PayloadType::INIT_ITEM);
   socket_->send(&frame, sizeof(frame), ZMQ_SNDMORE);
