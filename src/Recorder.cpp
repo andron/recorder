@@ -103,13 +103,20 @@ updateItem(Item* item, int64_t const time, V const value) {
 
 // Static definitions for RecorderCommon
 // ----------------------------------------------------------------------------
-void RecorderCommon::setContext(zmq::context_t* context) {
+void
+RecorderCommon::setContext(zmq::context_t* context) {
   socket_context = context;
 }
 
-void RecorderCommon::setAddress(std::string address) {
+void
+RecorderCommon::setAddress(std::string address) {
   printf("Address: %s\n", address.c_str());
   socket_address = address;
+}
+
+std::string
+RecorderCommon::getAddress() {
+  return RecorderCommon::socket_address;
 }
 
 zmq::context_t* RecorderCommon::socket_context = nullptr;
@@ -155,11 +162,6 @@ RecorderCommon::RecorderCommon(int32_t id, std::string name)
 RecorderCommon::~RecorderCommon() {
   flushSendBuffer();
   socket_->close();
-}
-
-std::string
-RecorderCommon::getAddress() const {
-  return RecorderCommon::socket_address;
 }
 
 void

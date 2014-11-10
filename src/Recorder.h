@@ -128,7 +128,7 @@ class RecorderCommon {
   static void setAddress(std::string address);
 
   //!  Get socket address.
-  std::string getAddress() const;
+  static std::string getAddress();
 
  protected:
   void flushSendBuffer();
