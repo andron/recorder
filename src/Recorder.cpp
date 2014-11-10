@@ -164,11 +164,10 @@ RecorderCommon::getAddress() const {
 
 void
 RecorderCommon::flushSendBuffer() {
-  constexpr int16_t sendtype = 0;
   constexpr auto item_size = sizeof(decltype(send_buffer)::value_type);
   if (send_buffer_index > 0) {
-    socket_->send(&recorder_id_, sizeof(recorder_id_), ZMQ_SNDMORE);
-    socket_->send(&sendtype, sizeof(sendtype), ZMQ_SNDMORE);
+    PayloadFrame const frame(recorder_id_, 1);
+    socket_->send(&frame, sizeof(frame), ZMQ_SNDMORE);
     socket_->send(send_buffer.data(), send_buffer_index * item_size);
     send_buffer_index = 0;
   }
@@ -176,9 +175,8 @@ RecorderCommon::flushSendBuffer() {
 
 void
 RecorderCommon::setup(ItemInit const& iteminit) {
-  constexpr int16_t sendtype = 1;
-  socket_->send(&recorder_id_, sizeof(recorder_id_), ZMQ_SNDMORE);
-  socket_->send(&sendtype, sizeof(sendtype), ZMQ_SNDMORE);
+  PayloadFrame const frame(recorder_id_, 0);
+  socket_->send(&frame, sizeof(frame), ZMQ_SNDMORE);
   socket_->send(&iteminit, sizeof(iteminit));
 }
 

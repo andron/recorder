@@ -37,12 +37,41 @@ class context_t;
 class socket_t;
 }
 
+#define PACKED __attribute__((packed))
 
-// Recording item being passed around.
+#define CHECK_POW2_SIZE(X)                                              \
+  static_assert((((sizeof(X) << 1)-1) & sizeof(X)) == sizeof(X),        \
+                "Size of " #X " shall be power of 2");
+
+// Item being passed around on the ZeroMQ-bus.
 // ----------------------------------------------------------------------------
-enum class ItemType : std::int16_t { INIT, OTHER, CHAR, INT, UINT, FLOAT, STR, };
+enum class PayloadType : std::int32_t {
+  INIT_RECORDER, INIT_ITEM, DATA_ITEM, };
 
-struct __attribute__((packed)) ItemInit {
+struct PACKED PayloadFrame {
+  PayloadFrame(int32_t id, int32_t type)
+      : recorder_id(id)
+      , payload_type(type) {
+  }
+  int32_t recorder_id;
+  int32_t payload_type;
+};
+
+struct PACKED RecorderInit {
+  RecorderInit(int32_t id, int32_t size, std::string name)
+      : recorder_id(id)
+      , recorder_item_size(size) {
+    std::strncpy(recorder_name, name.c_str(), sizeof(recorder_name));
+  }
+  int32_t recorder_id;
+  int32_t recorder_item_size;
+  char recorder_name[56];
+};
+
+enum class ItemType : std::int16_t {
+  INIT, OTHER, CHAR, INT, UINT, FLOAT, STR, };
+
+struct PACKED ItemInit {
   ItemInit(int16_t key,
            std::string const& name,
            std::string const& unit,
@@ -53,11 +82,8 @@ struct __attribute__((packed)) ItemInit {
   char unit[32];
   char desc[190];
 };
-static_assert((((sizeof(ItemInit) << 1)-1) & sizeof(ItemInit))
-              == sizeof(ItemInit),
-              "Size of ItemInit shall be power of 2");
 
-struct __attribute__((packed)) Item {
+struct PACKED Item {
   Item();
   explicit Item(int16_t key);
 
@@ -72,9 +98,11 @@ struct __attribute__((packed)) Item {
     double   d;
   } data;
 };
-static_assert((((sizeof(Item) << 1)-1) & sizeof(Item))
-              == sizeof(Item),
-              "Size of Item shall be power of 2");
+
+CHECK_POW2_SIZE(PayloadFrame);
+CHECK_POW2_SIZE(RecorderInit);
+CHECK_POW2_SIZE(ItemInit);
+CHECK_POW2_SIZE(Item);
 // ----------------------------------------------------------------------------
 
 
@@ -105,7 +133,7 @@ class RecorderCommon {
  protected:
   void flushSendBuffer();
 
-  void setup(ItemInit const& iteminit);
+  void setup(ItemInit const& init);
 
   void record(Item const& item);
 
