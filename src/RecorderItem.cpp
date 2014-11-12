@@ -27,7 +27,7 @@
 #include <string>
 #include <cstdio>
 
-ItemInit::ItemInit(int16_t item_key,
+InitItem::InitItem(int16_t item_key,
                    std::string const& item_name,
                    std::string const& item_unit,
                    std::string const& item_desc)

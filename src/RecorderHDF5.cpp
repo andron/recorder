@@ -81,7 +81,7 @@ RecorderHDF5::run() {
     auto rec_id = frame.recorder_id;
 
     if (frame.payload_type == PayloadType::INIT_ITEM) {
-      auto init = zmqutils::pop<ItemInit>(&sock, &zmsg);
+      auto init = zmqutils::pop<InitItem>(&sock, &zmsg);
       printf("(%04d) Setup: '%s', '%s' : \"%s\"\n",
              rec_id, init.name, init.unit, init.desc);
       counter.insert(std::make_pair(rec_id, 0));

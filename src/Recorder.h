@@ -59,7 +59,7 @@ class Recorder : public RecorderBase {
              std::string const& desc = "N/A") {
     auto const key = static_cast<decltype(Item::key)>(enumkey);
     items_[key] = Item(key);
-    RecorderBase::setup(ItemInit(key, name, unit, desc));
+    RecorderBase::setup(InitItem(key, name, unit, desc));
   }
 
   // Record parameter with key, previously setup using setup(). The

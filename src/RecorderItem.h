@@ -48,8 +48,8 @@ struct PACKED PayloadFrame {
   PayloadType payload_type;
 };
 
-struct PACKED RecorderInit {
-  RecorderInit(int32_t id, int32_t size, std::string name)
+struct PACKED InitRecorder {
+  InitRecorder(int32_t id, int32_t size, std::string name)
       : recorder_id(id)
       , recorder_item_size(size) {
     std::strncpy(recorder_name, name.c_str(), sizeof(recorder_name));
@@ -62,8 +62,8 @@ struct PACKED RecorderInit {
 enum class ItemType : std::int16_t {
   INIT, OTHER, CHAR, INT, UINT, FLOAT, STR, };
 
-struct PACKED ItemInit {
-  ItemInit(int16_t key,
+struct PACKED InitItem {
+  InitItem(int16_t key,
            std::string const& name,
            std::string const& unit,
            std::string const& desc);
@@ -91,6 +91,6 @@ struct PACKED Item {
 };
 
 CHECK_POW2_SIZE(PayloadFrame);
-CHECK_POW2_SIZE(RecorderInit);
-CHECK_POW2_SIZE(ItemInit);
+CHECK_POW2_SIZE(InitRecorder);
+CHECK_POW2_SIZE(InitItem);
 CHECK_POW2_SIZE(Item);

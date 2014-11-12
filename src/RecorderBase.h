@@ -68,7 +68,7 @@ class RecorderBase {
 
   void setupRecorder(int32_t max_size);
 
-  void setup(ItemInit const& init);
+  void setup(InitItem const& init);
 
   void record(Item const& item);
 
