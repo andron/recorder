@@ -53,11 +53,11 @@ class Recorder : public RecorderBase {
   // setup the key and unit will be locked.
   //
   // See the implementation for available instantiations of updateItem.
-  void setup(K const KEY,
+  void setup(K const enumkey,
              std::string const& name,
              std::string const& unit,
              std::string const& desc = "N/A") {
-    auto const key = static_cast<decltype(Item::key)>(KEY);
+    auto const key = static_cast<decltype(Item::key)>(enumkey);
     items_[key] = Item(key);
     RecorderBase::setup(ItemInit(key, name, unit, desc));
   }
@@ -67,15 +67,18 @@ class Recorder : public RecorderBase {
   // difference between 1 (integer) and 1.0 (float) causing a new
   // recording event to occur.
   template<typename V>
-  void record(K const key, V const value) {
+  void record(K const enumkey, V const value) {
+    // TODO() time value must be provided.
     auto const time = std::time(nullptr);
-    auto& item = items_[static_cast<size_t>(key)];
+    auto& item = items_[static_cast<decltype(Item::key)>(enumkey)];
     if (item.type == ItemType::INIT) {
       updateItem(&item, time, value);
       RecorderBase::record(item);
     } else if (std::memcmp(&(item.data), &value, sizeof(value))) {
+      // First send old value at current time
       item.time = time;
       RecorderBase::record(item);
+      // Then update item and send again at current time
       updateItem(&item, time, value);
       RecorderBase::record(item);
     } else {
