@@ -27,7 +27,6 @@
 #include "RecorderItem.h"
 
 #include <array>
-#include <atomic>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
@@ -52,7 +51,7 @@ class RecorderBase {
   static int constexpr SEND_BUFFER_SIZE = 1<<10;
   typedef std::array<Item, SEND_BUFFER_SIZE> SendBuffer;
 
-  RecorderBase(int32_t id, std::string name);
+  RecorderBase(std::string name, int32_t external_id = 0);
   ~RecorderBase();
 
   //!  Set class context to use for ZeroMQ communication.
@@ -80,7 +79,8 @@ class RecorderBase {
   // Local identifier for the recorder. This goes into the first frame
   // of the zeromq message for the backend to use as filtering and
   // sorting identification.
-  int32_t const recorder_id_;
+  int32_t const external_id_;
+  int16_t const recorder_id_;
   std::string const recorder_name_;
 
   std::unique_ptr<zmq::socket_t> socket_;

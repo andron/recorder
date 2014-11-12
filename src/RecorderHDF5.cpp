@@ -36,7 +36,7 @@ typedef std::chrono::milliseconds msec;
 typedef std::chrono::microseconds usec;
 
 RecorderHDF5::RecorderHDF5()
-    : RecorderBase(0, "HDF5Backend") {
+    : RecorderBase("HDF5Backend") {
 }
 
 RecorderHDF5::~RecorderHDF5() {

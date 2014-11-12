@@ -86,7 +86,7 @@ main(int ac, char** av) {
           snprintf(name3, sizeof(name3), "C%02d", i);
           snprintf(name4, sizeof(name4), "D%02d", i);
 
-          Recorder<FOO> rec(i, recorder_name);
+          Recorder<FOO> rec(recorder_name, i);
           rec.setup(FOO::A, name1, "m");
           rec.setup(FOO::B, name2, "ms");
           rec.setup(FOO::C, name3, "kg");

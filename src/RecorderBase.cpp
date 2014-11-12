@@ -25,6 +25,7 @@
 #include "RecorderBase.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
@@ -39,6 +40,7 @@
 
 namespace {
 void Error(char const* msg) { std::fprintf(stderr, "%s\n", msg); }
+std::atomic<int16_t> g_recorder_id = ATOMIC_VAR_INIT(0);
 }
 
 
@@ -130,8 +132,9 @@ RecorderBase::SendBuffer::size_type RecorderBase::send_buffer_index = 0;
 // ----------------------------------------------------------------------------
 
 
-RecorderBase::RecorderBase(int32_t id, std::string name)
-    : recorder_id_(id)
+RecorderBase::RecorderBase(std::string name, int32_t id)
+    : external_id_(id)
+    , recorder_id_(g_recorder_id.fetch_add(1))
     , recorder_name_(name) {
   bool error = false;
 

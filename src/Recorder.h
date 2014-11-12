@@ -39,8 +39,8 @@ class Recorder : public RecorderBase {
   Recorder(Recorder const&) = delete;
   Recorder& operator= (Recorder const&) = delete;
 
-  Recorder(int32_t id, std::string name)
-      : RecorderBase(id, name) {
+  Recorder(std::string name, int32_t external_id = 0)
+      : RecorderBase(name, external_id) {
     RecorderBase::setupRecorder(items_.max_size());
   }
 
