@@ -24,14 +24,14 @@
 
 #pragma once
 
+#include "RecorderItem.h"
+
 #include <array>
 #include <ctime>
 #include <cstdlib>
 #include <cstring>
 #include <memory>
 #include <string>
-
-#include "RecorderItem.h"
 
 namespace zmq {
 class context_t;

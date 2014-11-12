@@ -23,7 +23,7 @@
 */
 
 #include "RecorderHDF5.h"
-#include "Recorder.h"
+#include "RecorderCommon.h"
 
 #include "zmqutils.h"
 

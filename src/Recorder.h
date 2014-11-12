@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include "RecorderCommon.h"
+
 #include <array>
 #include <ctime>
 #include <cstdlib>
@@ -31,19 +33,15 @@
 #include <memory>
 #include <string>
 
-#include "RecorderCommon.h"
-
 template<typename K>
 class Recorder : public RecorderCommon {
  public:
   Recorder(Recorder const&) = delete;
   Recorder& operator= (Recorder const&) = delete;
 
-  typedef RecorderCommon Super;
-
   Recorder(int32_t id, std::string name)
-      : Super(id, name) {
-    Super::setupRecorder(items_.max_size());
+      : RecorderCommon(id, name) {
+    RecorderCommon::setupRecorder(items_.max_size());
   }
 
   ~Recorder() {
@@ -55,14 +53,13 @@ class Recorder : public RecorderCommon {
   // setup the key and unit will be locked.
   //
   // See the implementation for available instantiations of updateItem.
-  Recorder& setup(K const KEY,
-                  std::string const& name,
-                  std::string const& unit,
-                  std::string const& desc = "N/A") {
+  void setup(K const KEY,
+             std::string const& name,
+             std::string const& unit,
+             std::string const& desc = "N/A") {
     auto const key = static_cast<decltype(Item::key)>(KEY);
     items_[key] = Item(key);
-    Super::setup(ItemInit(key, name, unit, desc));
-    return *this;
+    RecorderCommon::setup(ItemInit(key, name, unit, desc));
   }
 
   // Record parameter with key, previously setup using setup(). The
@@ -70,21 +67,20 @@ class Recorder : public RecorderCommon {
   // difference between 1 (integer) and 1.0 (float) causing a new
   // recording event to occur.
   template<typename V>
-  Recorder& record(K const key, V const value) {
+  void record(K const key, V const value) {
     auto const time = std::time(nullptr);
     auto& item = items_[static_cast<size_t>(key)];
     if (item.type == ItemType::INIT) {
       updateItem(&item, time, value);
-      Super::record(item);
+      RecorderCommon::record(item);
     } else if (std::memcmp(&(item.data), &value, sizeof(value))) {
       item.time = time;
-      Super::record(item);
+      RecorderCommon::record(item);
       updateItem(&item, time, value);
-      Super::record(item);
+      RecorderCommon::record(item);
     } else {
       // Ignore unchanged value
     }
-    return *this;
   }
 
  private:
