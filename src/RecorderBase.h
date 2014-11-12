@@ -27,9 +27,10 @@
 #include "RecorderItem.h"
 
 #include <array>
-#include <ctime>
+#include <atomic>
 #include <cstdlib>
 #include <cstring>
+#include <ctime>
 #include <memory>
 #include <string>
 
@@ -43,16 +44,16 @@ template<typename V> void
 updateItem(Item* item, int64_t const time, V const value);
 
 
-class RecorderCommon {
+class RecorderBase {
  public:
-  RecorderCommon(RecorderCommon const&) = delete;
-  RecorderCommon& operator= (RecorderCommon const&) = delete;
+  RecorderBase(RecorderBase const&) = delete;
+  RecorderBase& operator= (RecorderBase const&) = delete;
 
   static int constexpr SEND_BUFFER_SIZE = 1<<10;
   typedef std::array<Item, SEND_BUFFER_SIZE> SendBuffer;
 
-  RecorderCommon(int32_t id, std::string name);
-  ~RecorderCommon();
+  RecorderBase(int32_t id, std::string name);
+  ~RecorderBase();
 
   //!  Set class context to use for ZeroMQ communication.
   static void setContext(zmq::context_t* context);

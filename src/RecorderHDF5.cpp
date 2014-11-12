@@ -23,7 +23,7 @@
 */
 
 #include "RecorderHDF5.h"
-#include "RecorderCommon.h"
+#include "RecorderBase.h"
 
 #include "zmqutils.h"
 
@@ -36,7 +36,7 @@ typedef std::chrono::milliseconds msec;
 typedef std::chrono::microseconds usec;
 
 RecorderHDF5::RecorderHDF5()
-    : RecorderCommon(0, "HDF5Backend") {
+    : RecorderBase(0, "HDF5Backend") {
 }
 
 RecorderHDF5::~RecorderHDF5() {
@@ -64,8 +64,8 @@ RecorderHDF5::stop() {
 void
 RecorderHDF5::run() {
   auto t1 = std::chrono::high_resolution_clock::now();
-  zmq::socket_t sock(*RecorderCommon::socket_context, ZMQ_PULL);
-  zmqutils::bind(&sock, RecorderCommon::socket_address.c_str());
+  zmq::socket_t sock(*RecorderBase::socket_context, ZMQ_PULL);
+  zmqutils::bind(&sock, RecorderBase::socket_address.c_str());
   zmq::message_t zmsg(1024);
   bool messages_to_process = true;
   std::map<int32_t, int32_t> counter;

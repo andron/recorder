@@ -48,8 +48,8 @@ main(int ac, char** av) {
 
   std::string const addr("inproc://recorder");
 
-  RecorderCommon::setContext(&ctx);
-  RecorderCommon::setAddress(addr);
+  RecorderBase::setContext(&ctx);
+  RecorderBase::setAddress(addr);
 
   printf("Item size: %lu\n", sizeof(Item));
 

@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "RecorderCommon.h"
+#include "RecorderBase.h"
 
 #include <array>
 #include <ctime>
@@ -34,14 +34,14 @@
 #include <string>
 
 template<typename K>
-class Recorder : public RecorderCommon {
+class Recorder : public RecorderBase {
  public:
   Recorder(Recorder const&) = delete;
   Recorder& operator= (Recorder const&) = delete;
 
   Recorder(int32_t id, std::string name)
-      : RecorderCommon(id, name) {
-    RecorderCommon::setupRecorder(items_.max_size());
+      : RecorderBase(id, name) {
+    RecorderBase::setupRecorder(items_.max_size());
   }
 
   ~Recorder() {
@@ -59,7 +59,7 @@ class Recorder : public RecorderCommon {
              std::string const& desc = "N/A") {
     auto const key = static_cast<decltype(Item::key)>(KEY);
     items_[key] = Item(key);
-    RecorderCommon::setup(ItemInit(key, name, unit, desc));
+    RecorderBase::setup(ItemInit(key, name, unit, desc));
   }
 
   // Record parameter with key, previously setup using setup(). The
@@ -72,12 +72,12 @@ class Recorder : public RecorderCommon {
     auto& item = items_[static_cast<size_t>(key)];
     if (item.type == ItemType::INIT) {
       updateItem(&item, time, value);
-      RecorderCommon::record(item);
+      RecorderBase::record(item);
     } else if (std::memcmp(&(item.data), &value, sizeof(value))) {
       item.time = time;
-      RecorderCommon::record(item);
+      RecorderBase::record(item);
       updateItem(&item, time, value);
-      RecorderCommon::record(item);
+      RecorderBase::record(item);
     } else {
       // Ignore unchanged value
     }

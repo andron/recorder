@@ -22,7 +22,7 @@
   THE SOFTWARE.
 */
 
-#include "RecorderCommon.h"
+#include "RecorderBase.h"
 
 #include <algorithm>
 #include <cassert>
@@ -101,46 +101,46 @@ updateItem(Item* item, int64_t const time, V const value) {
 // ----------------------------------------------------------------------------
 
 
-// Static definitions for RecorderCommon
+// Static definitions for RecorderBase
 // ----------------------------------------------------------------------------
 void
-RecorderCommon::setContext(zmq::context_t* context) {
+RecorderBase::setContext(zmq::context_t* context) {
   socket_context = context;
 }
 
 void
-RecorderCommon::setAddress(std::string address) {
+RecorderBase::setAddress(std::string address) {
   printf("Address: %s\n", address.c_str());
   socket_address = address;
 }
 
 std::string
-RecorderCommon::getAddress() {
-  return RecorderCommon::socket_address;
+RecorderBase::getAddress() {
+  return RecorderBase::socket_address;
 }
 
-zmq::context_t* RecorderCommon::socket_context = nullptr;
-std::string     RecorderCommon::socket_address = "";
+zmq::context_t* RecorderBase::socket_context = nullptr;
+std::string     RecorderBase::socket_address = "";
 
 thread_local
-RecorderCommon::SendBuffer RecorderCommon::send_buffer;
+RecorderBase::SendBuffer RecorderBase::send_buffer;
 
 thread_local
-RecorderCommon::SendBuffer::size_type RecorderCommon::send_buffer_index = 0;
+RecorderBase::SendBuffer::size_type RecorderBase::send_buffer_index = 0;
 // ----------------------------------------------------------------------------
 
 
-RecorderCommon::RecorderCommon(int32_t id, std::string name)
+RecorderBase::RecorderBase(int32_t id, std::string name)
     : recorder_id_(id)
     , recorder_name_(name) {
   bool error = false;
 
-  if (RecorderCommon::socket_context == nullptr) {
+  if (RecorderBase::socket_context == nullptr) {
     Error("setContext() must be called before instantiation");
     error = true;
   }
 
-  if (RecorderCommon::socket_address.empty()) {
+  if (RecorderBase::socket_address.empty()) {
     Error("Socket address empty, setAddress() must be called");
     Error("before first instantiation");
     error = true;
@@ -153,19 +153,19 @@ RecorderCommon::RecorderCommon(int32_t id, std::string name)
   int constexpr linger = 3000;
   int constexpr sendtimeout = 2;
 
-  socket_.reset(new zmq::socket_t(*RecorderCommon::socket_context, ZMQ_PUSH));
+  socket_.reset(new zmq::socket_t(*RecorderBase::socket_context, ZMQ_PUSH));
   socket_->setsockopt(ZMQ_LINGER, &linger, sizeof(linger));
   socket_->setsockopt(ZMQ_SNDTIMEO, &sendtimeout, sizeof(sendtimeout));
-  zmqutils::connect(socket_.get(), RecorderCommon::socket_address);
+  zmqutils::connect(socket_.get(), RecorderBase::socket_address);
 }
 
-RecorderCommon::~RecorderCommon() {
+RecorderBase::~RecorderBase() {
   flushSendBuffer();
   socket_->close();
 }
 
 void
-RecorderCommon::flushSendBuffer() {
+RecorderBase::flushSendBuffer() {
   constexpr auto item_size = sizeof(decltype(send_buffer)::value_type);
   if (send_buffer_index > 0) {
     PayloadFrame const frame(recorder_id_, PayloadType::DATA);
@@ -176,7 +176,7 @@ RecorderCommon::flushSendBuffer() {
 }
 
 void
-RecorderCommon::setupRecorder(int32_t max_size) {
+RecorderBase::setupRecorder(int32_t max_size) {
   PayloadFrame const frame(recorder_id_, PayloadType::INIT_RECORDER);
   RecorderInit const recorderinit(recorder_id_, max_size, recorder_name_);
   socket_->send(&frame, sizeof(frame), ZMQ_SNDMORE);
@@ -184,14 +184,14 @@ RecorderCommon::setupRecorder(int32_t max_size) {
 }
 
 void
-RecorderCommon::setup(ItemInit const& iteminit) {
+RecorderBase::setup(ItemInit const& iteminit) {
   PayloadFrame const frame(recorder_id_, PayloadType::INIT_ITEM);
   socket_->send(&frame, sizeof(frame), ZMQ_SNDMORE);
   socket_->send(&iteminit, sizeof(iteminit));
 }
 
 void
-RecorderCommon::record(Item const& item) {
+RecorderBase::record(Item const& item) {
   send_buffer[send_buffer_index++] = item;
   if (send_buffer_index == send_buffer.max_size()) {
     flushSendBuffer();
