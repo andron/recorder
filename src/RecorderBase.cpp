@@ -179,18 +179,19 @@ RecorderBase::flushSendBuffer() {
 }
 
 void
-RecorderBase::setupRecorder(int32_t max_size) {
-  PayloadFrame const frame(recorder_id_, PayloadType::INIT_RECORDER);
-  InitRecorder const recorderinit(recorder_id_, max_size, recorder_name_);
+RecorderBase::setupRecorder(int32_t num_items) {
+  PayloadFrame const frame(0, PayloadType::INIT_RECORDER);
+  InitRecorder const init_rec(
+      external_id_, recorder_id_, num_items, recorder_name_);
   socket_->send(&frame, sizeof(frame), ZMQ_SNDMORE);
-  socket_->send(&recorderinit, sizeof(recorderinit));
+  socket_->send(&init_rec, sizeof(init_rec));
 }
 
 void
-RecorderBase::setup(InitItem const& iteminit) {
+RecorderBase::setupItem(InitItem const& init_item) {
   PayloadFrame const frame(recorder_id_, PayloadType::INIT_ITEM);
   socket_->send(&frame, sizeof(frame), ZMQ_SNDMORE);
-  socket_->send(&iteminit, sizeof(iteminit));
+  socket_->send(&init_item, sizeof(init_item));
 }
 
 void
