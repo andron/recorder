@@ -54,13 +54,13 @@ class RecorderBase {
   RecorderBase(std::string name, int32_t external_id = 0);
   ~RecorderBase();
 
-  //!  Set class context to use for ZeroMQ communication.
+  // Set class context to use for ZeroMQ communication.
   static void setContext(zmq::context_t* context);
 
-  //!  Set class socket address for ZeroMQ communication.
+  // Set class socket address for ZeroMQ communication.
   static void setAddress(std::string address);
 
-  //!  Get socket address.
+  // Get socket address.
   static std::string getAddress();
 
  protected:
