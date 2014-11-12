@@ -22,7 +22,7 @@
   THE SOFTWARE.
 */
 
-#include "RecorderItem.h"
+#include "RecorderTypes.h"
 
 #include <string>
 #include <cstdio>

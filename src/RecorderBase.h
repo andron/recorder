@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "RecorderItem.h"
+#include "RecorderTypes.h"
 
 #include <array>
 #include <cstdlib>
