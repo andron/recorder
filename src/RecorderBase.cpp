@@ -46,6 +46,7 @@ std::atomic<int16_t> g_recorder_id = ATOMIC_VAR_INIT(0);
 
 // Clone functions for Item
 // ----------------------------------------------------------------------------
+// Instantiations
 template void
 updateItem<char>(Item*, int32_t const, char const);
 
@@ -64,7 +65,7 @@ updateItem<uint64_t>(Item*, int32_t const, uint64_t const);
 template void
 updateItem<double>(Item*, int32_t const, double const);
 
-
+// Specialization
 template<> void
 updateItem<char const*>(Item* item, int32_t const time, char const* value) {
   item->time = time;
@@ -72,6 +73,7 @@ updateItem<char const*>(Item* item, int32_t const time, char const* value) {
   std::strncpy(&item->data.s[0], &value[0], sizeof(item->data.s));
 }
 
+// Definition
 template<typename V> void
 updateItem(Item* item, int32_t const time, V const value) {
   item->time = time;

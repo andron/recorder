@@ -38,10 +38,9 @@ class context_t;
 class socket_t;
 }
 
-
+// Template declaration
 template<typename V> void
 updateItem(Item* item, int32_t const time, V const value);
-
 
 class RecorderBase {
  public:
