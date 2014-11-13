@@ -89,10 +89,13 @@ struct PACKED Item {
   ItemType type; // int8_t is more than enough, masking can be used.
   union Data {
     char     c;
-    char     s[sizeof(int64_t)];
     int64_t  i;
     uint64_t u;
     double   d;
+    int64_t  v_i[3];
+    uint64_t v_u[3];
+    double   v_d[3];
+    char     s[sizeof(v_i)];
   } data;
 };
 
