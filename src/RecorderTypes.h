@@ -64,28 +64,29 @@ struct PACKED InitRecorder {
   char recorder_name[48];
 };
 
-enum class ItemType : std::int16_t {
+enum class ItemType : std::int8_t {
   INIT, OTHER, CHAR, INT, UINT, FLOAT, STR, };
 
 struct PACKED InitItem {
-  InitItem(int16_t key,
+  InitItem(int8_t key,
            std::string const& name,
            std::string const& unit,
            std::string const& desc);
 
-  int16_t key;
+  int8_t key;
   char name[32];
   char unit[32];
-  char desc[190];
+  char desc[191];
 };
 
 struct PACKED Item {
   Item();
-  explicit Item(int16_t key);
+  explicit Item(int8_t key);
 
-  int16_t key;
-  ItemType type;
-  int32_t time;
+  int32_t  time;
+  int16_t  recorder_id;
+  int8_t   key;
+  ItemType type; // int8_t is more than enough, masking can be used.
   union Data {
     char     c;
     char     s[sizeof(int64_t)];

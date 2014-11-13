@@ -27,7 +27,7 @@
 #include <string>
 #include <cstdio>
 
-InitItem::InitItem(int16_t item_key,
+InitItem::InitItem(int8_t item_key,
                    std::string const& item_name,
                    std::string const& item_unit,
                    std::string const& item_desc)
@@ -38,13 +38,14 @@ InitItem::InitItem(int16_t item_key,
 }
 
 Item::Item()
-    : key(-1)
-    , type(ItemType::INIT)
-    , time(-1) {
+    : time(-1)
+    , recorder_id(-1)
+    , key(-1)
+    , type(ItemType::INIT) {
   std::memset(&data, 0, sizeof(data));
 }
 
-Item::Item(int16_t item_key)
+Item::Item(int8_t item_key)
     : Item() {
   key = item_key;
 }

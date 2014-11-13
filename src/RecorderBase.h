@@ -40,7 +40,7 @@ class socket_t;
 
 
 template<typename V> void
-updateItem(Item* item, int64_t const time, V const value);
+updateItem(Item* item, int32_t const time, V const value);
 
 
 class RecorderBase {

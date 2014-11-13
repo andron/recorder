@@ -47,33 +47,33 @@ std::atomic<int16_t> g_recorder_id = ATOMIC_VAR_INIT(0);
 // Clone functions for Item
 // ----------------------------------------------------------------------------
 template void
-updateItem<char>(Item*, int64_t const, char const);
+updateItem<char>(Item*, int32_t const, char const);
 
 template void
-updateItem<int32_t>(Item*, int64_t const, int32_t const);
+updateItem<int32_t>(Item*, int32_t const, int32_t const);
 
 template void
-updateItem<int64_t>(Item*, int64_t const, int64_t const);
+updateItem<int64_t>(Item*, int32_t const, int64_t const);
 
 template void
-updateItem<uint32_t>(Item*, int64_t const, uint32_t const);
+updateItem<uint32_t>(Item*, int32_t const, uint32_t const);
 
 template void
-updateItem<uint64_t>(Item*, int64_t const, uint64_t const);
+updateItem<uint64_t>(Item*, int32_t const, uint64_t const);
 
 template void
-updateItem<double>(Item*, int64_t const, double const);
+updateItem<double>(Item*, int32_t const, double const);
 
 
 template<> void
-updateItem<char const*>(Item* item, int64_t const time, char const* value) {
+updateItem<char const*>(Item* item, int32_t const time, char const* value) {
   item->time = time;
   item->type = ItemType::STR;
   std::strncpy(&item->data.s[0], &value[0], sizeof(item->data.s));
 }
 
 template<typename V> void
-updateItem(Item* item, int64_t const time, V const value) {
+updateItem(Item* item, int32_t const time, V const value) {
   item->time = time;
   if (std::is_same<char, V>::value) {
     item->type   = ItemType::CHAR;
