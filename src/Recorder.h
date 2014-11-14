@@ -33,6 +33,21 @@
 #include <memory>
 #include <string>
 
+namespace util {
+template<typename V, size_t N>
+static void updateData(Item* item, V const value);
+
+template<typename V, size_t N>
+void updateData(Item* item, V const (&v)[N]) {
+  std::memcpy(&item->data, &v, sizeof(v));
+}
+
+template<>
+void updateData<char const*, 0>(Item* item, char const* v) {
+  std::strncpy(&item->data.s[0], &v[0], sizeof(item->data.s));
+}
+}  // namespace util
+
 template<typename K>
 class Recorder : public RecorderBase {
  public:
@@ -66,24 +81,39 @@ class Recorder : public RecorderBase {
   // value need not have the same type in each call but there will be a
   // difference between 1 (integer) and 1.0 (float) causing a new
   // recording event to occur.
-  template<typename V>
-  void record(K const enumkey, V const value) {
-    // TODO() time value must be provided.
+  template<typename V, size_t N>
+  void record(K const enumkey, V const (&value)[N]) {
+    static_assert(N <= 3, "Maximum array size is 3");
     auto const time = std::time(nullptr);
-    auto& item = items_[static_cast<decltype(Item::key)>(enumkey)];
+    auto& item = items_[static_cast<size_t>(enumkey)];
+
     if (item.type == ItemType::INIT) {
-      updateItem(&item, time, value);
+      // At this point we know the data type. Will only happen once and
+      // from now on the receiver will have to stick with this data type
+      // for storage.
+      setDataType<V, N>(&item);
+      // Set time
+      item.time = time;
+      // Set data
+      util::updateData(&item, value);
+      // Record
       RecorderBase::record(item);
     } else if (std::memcmp(&(item.data), &value, sizeof(value))) {
-      // First send old value at current time
+      // First record old value at current time
       item.time = time;
       RecorderBase::record(item);
-      // Then update item and send again at current time
-      updateItem(&item, time, value);
+      // Then update value and record again at current time
+      util::updateData(&item, value);
       RecorderBase::record(item);
     } else {
       // Ignore unchanged value
     }
+  }
+
+  // For simple single values record calls.
+  template<typename V>
+  void record(K const enumkey, V const value) {
+    record(enumkey, {value});
   }
 
  private:

@@ -86,7 +86,7 @@ struct PACKED Item {
   int32_t  time;
   int16_t  recorder_id;
   int8_t   key;
-  ItemType type; // int8_t is more than enough, masking can be used.
+  ItemType type;
   union Data {
     char     c;
     int64_t  i;
@@ -103,3 +103,26 @@ CHECK_POW2_SIZE(PayloadFrame);
 CHECK_POW2_SIZE(InitRecorder);
 CHECK_POW2_SIZE(InitItem);
 CHECK_POW2_SIZE(Item);
+
+template<typename V, int N>
+void setDataType(Item* item) {
+  if (std::is_same<char, V>::value) {
+    item->type = ItemType::CHAR;
+  } else if (std::is_integral<V>::value) {
+    if (std::is_signed<V>::value) {
+      item->type = ItemType::INT;
+    } else if (std::is_unsigned<V>::value) {
+      item->type = ItemType::UINT;
+    } else {
+      item->type = ItemType::OTHER;
+    }
+  } else if (std::is_floating_point<V>::value) {
+    item->type = ItemType::FLOAT;
+  } else {
+    item->type = ItemType::OTHER;
+  }
+
+  // Mask type for number of elements, 1, 2 or 3.
+  item->type = static_cast<ItemType>(
+      static_cast<int8_t>(item->type) | (N << 4));
+}

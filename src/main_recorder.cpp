@@ -56,7 +56,7 @@ main(int ac, char** av) {
   RecorderHDF5 backend;
   backend.start();
 
-  enum class FOO { A, B, C, D, Count };
+  enum class FOO { A, B, C, D, X, Y, Count };
 
   int num_threads  = 4;
   if (ac > 1)
@@ -66,8 +66,8 @@ main(int ac, char** av) {
   if (ac > 2)
     num_rounds = std::atoi(av[2]);
 
-  auto num_messages = num_threads * 4 * (2 * num_rounds - 1);
-  printf("Running %d threads, sending 4*%d records -> %d (%ldMiB)\n",
+  auto num_messages = num_threads * 6 * (2 * num_rounds - 1);
+  printf("Running %d threads, sending 6*%d records -> %d (%ldMiB)\n",
          num_threads, num_rounds, num_messages,
          (num_messages * sizeof(Item))/(1024*1024));
 
@@ -97,6 +97,10 @@ main(int ac, char** av) {
             rec.record(FOO::B, 1.0/j);
             rec.record(FOO::C, j*j);
             rec.record(FOO::D, std::log(j));
+
+            double data[3] = {500.0*j*i, 600.0*j*i, 700.0*j*i};
+            rec.record(FOO::X, data);
+            rec.record(FOO::Y, {10*j*i, 20*j*i});
           }
         }));
   }
