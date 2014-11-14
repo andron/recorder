@@ -26,12 +26,10 @@
 
 #include <algorithm>
 #include <atomic>
-#include <cassert>
 #include <cstdlib>
 #include <cstring>
 #include <memory>
 #include <string>
-#include <type_traits>
 
 #include <zmq.hpp>
 
@@ -42,68 +40,6 @@ namespace {
 void Error(char const* msg) { std::fprintf(stderr, "%s\n", msg); }
 std::atomic<int16_t> g_recorder_id = ATOMIC_VAR_INIT(0);
 }
-
-
-// Clone functions for Item
-// ----------------------------------------------------------------------------
-// Instantiations
-template void
-updateItem<char>(Item*, int32_t const, char const);
-
-template void
-updateItem<int32_t>(Item*, int32_t const, int32_t const);
-
-template void
-updateItem<int64_t>(Item*, int32_t const, int64_t const);
-
-template void
-updateItem<uint32_t>(Item*, int32_t const, uint32_t const);
-
-template void
-updateItem<uint64_t>(Item*, int32_t const, uint64_t const);
-
-template void
-updateItem<double>(Item*, int32_t const, double const);
-
-// Specialization
-template<> void
-updateItem<char const*>(Item* item, int32_t const time, char const* value) {
-  item->time = time;
-  item->type = ItemType::STR;
-  std::strncpy(&item->data.s[0], &value[0], sizeof(item->data.s));
-}
-
-// Definition
-template<typename V> void
-updateItem(Item* item, int32_t const time, V const value) {
-  item->time = time;
-  if (std::is_same<char, V>::value) {
-    item->type   = ItemType::CHAR;
-    item->data.c = value;
-  } else if (std::is_integral<V>::value) {
-    if (std::is_signed<V>::value) {
-      item->type   = ItemType::INT;
-      item->data.i = value;
-    } else if (std::is_unsigned<V>::value) {
-      item->type   = ItemType::UINT;
-      item->data.u = value;
-    } else {
-      static_assert(
-          std::is_signed<V>::value || std::is_unsigned<V>::value,
-          "Unknown signedness for integral type (?)");
-    }
-  } else if (std::is_floating_point<V>::value) {
-    item->type   = ItemType::FLOAT;
-    item->data.d = value;
-  } else {
-    item->type   = ItemType::OTHER;
-    std::memcpy(&item->data,
-                &value,
-                std::min(sizeof(value), sizeof(item->data)));
-  }
-}
-// ----------------------------------------------------------------------------
-
 
 // Static definitions for RecorderBase
 // ----------------------------------------------------------------------------

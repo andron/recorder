@@ -27,9 +27,6 @@
 #include "RecorderTypes.h"
 
 #include <array>
-#include <cstdlib>
-#include <cstring>
-#include <ctime>
 #include <memory>
 #include <string>
 
@@ -37,10 +34,6 @@ namespace zmq {
 class context_t;
 class socket_t;
 }
-
-// Template declaration
-template<typename V> void
-updateItem(Item* item, int32_t const time, V const value);
 
 class RecorderBase {
  public:
