@@ -35,6 +35,20 @@
 typedef std::chrono::milliseconds msec;
 typedef std::chrono::microseconds usec;
 
+
+namespace {
+void printItem(Item const* item) {
+  auto info = static_cast<int8_t>(item->info);
+  printf("(DATA): %d, %4d, %4d  %x %x %x\n",
+         item->time,
+         item->recorder_id,
+         item->key,
+         item->info,
+         info & 0x0F,
+         info >> 4);
+}
+}  // namespace
+
 RecorderHDF5::RecorderHDF5()
     : RecorderBase("HDF5Backend") {
 }
