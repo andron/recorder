@@ -76,6 +76,14 @@ struct PACKED Item {
   Item();
   explicit Item(int8_t key);
 
+  ItemType getType() const {
+    return static_cast<ItemType>(static_cast<int8_t>(info) & 0x0F);
+  }
+
+  size_t getLength() const {
+    return static_cast<size_t>(static_cast<int8_t>(info) >> 4);
+  }
+
   int32_t  time;
   int16_t  recorder_id;
   int8_t   key;
