@@ -36,17 +36,8 @@
 
 // Item being passed around on the ZeroMQ-bus.
 // ----------------------------------------------------------------------------
-enum class PayloadType : std::int32_t {
+enum class PayloadType {
   INIT_RECORDER, INIT_ITEM, DATA, };
-
-struct PACKED PayloadFrame {
-  PayloadFrame(int32_t id, PayloadType type)
-      : recorder_id(id)
-      , payload_type(type) {
-  }
-  int32_t recorder_id;
-  PayloadType payload_type;
-};
 
 struct PACKED InitRecorder {
   InitRecorder(int64_t ext_id,
@@ -101,7 +92,6 @@ struct PACKED Item {
   } data;
 };
 
-CHECK_POW2_SIZE(PayloadFrame);
 CHECK_POW2_SIZE(InitRecorder);
 CHECK_POW2_SIZE(InitItem);
 CHECK_POW2_SIZE(Item);

@@ -77,19 +77,40 @@ RecorderHDF5::run() {
       continue;
     }
 
-    auto frame = zmqutils::pop<PayloadFrame>(&sock, &zmsg);
-    auto rec_id = frame.recorder_id;
+    auto type = zmqutils::pop<PayloadType>(&sock, &zmsg);
 
-    if (frame.payload_type == PayloadType::INIT_ITEM) {
-      auto init = zmqutils::pop<InitItem>(&sock, &zmsg);
-      printf("(%04d) Setup: '%s', '%s' : \"%s\"\n",
-             rec_id, init.name, init.unit, init.desc);
-      counter.insert(std::make_pair(rec_id, 0));
-    } else if (frame.payload_type == PayloadType::DATA) {
-      sock.recv(&zmsg);
-      auto num_params = zmsg.size() / sizeof(Item);
-      count += num_params;
-      counter[rec_id] += num_params;
+    switch (type) {
+      case PayloadType::DATA: {
+        sock.recv(&zmsg);
+        auto num_params = zmsg.size() / sizeof(Item);
+        count += num_params;
+        for (size_t i = 0; i < num_params; ++i) {
+          auto* item = static_cast<Item*>(zmsg.data()) + i;
+          int32_t rec_id = item->recorder_id;
+          counter[rec_id] += 1;
+        }
+      } break;;
+      case PayloadType::INIT_ITEM: {
+        auto init = zmqutils::pop<InitItem>(&sock, &zmsg);
+        printf("(ITEM): %4d-%d '%s' '%s' '%s'\n",
+               init.recorder_id,
+               init.key,
+               init.name,
+               init.unit,
+               init.desc);
+      } break;;
+      case PayloadType::INIT_RECORDER: {
+        auto init = zmqutils::pop<InitRecorder>(&sock, &zmsg);
+        printf("(REC):  %4d(%ld) L%d '%s'\n",
+               init.recorder_id,
+               init.external_id,
+               init.recorder_num_items,
+               init.recorder_name);
+        // int32_t rec_id = init.recorder_id;
+        // counter.reserve(rec_id);
+      } break;;
+      default:
+        break;;
     }
 
     size_t idx = 0;
