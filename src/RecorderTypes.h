@@ -56,7 +56,7 @@ struct PACKED InitRecorder {
 };
 
 enum class ItemType : std::int8_t {
-  INIT, OTHER, CHAR, INT, UINT, FLOAT, STR, };
+  NOTSETUP, INIT, OTHER, CHAR, INT, UINT, FLOAT, STR, };
 
 struct PACKED InitItem {
   InitItem(int16_t recorder_id,
@@ -79,7 +79,7 @@ struct PACKED Item {
   int32_t  time;
   int16_t  recorder_id;
   int8_t   key;
-  ItemType type;
+  ItemType info;
   union Data {
     char     c;
     int64_t  i;
@@ -98,23 +98,22 @@ CHECK_POW2_SIZE(Item);
 
 template<typename V, int N>
 void setDataType(Item* item) {
+  ItemType type;
   if (std::is_same<char, V>::value) {
-    item->type = ItemType::CHAR;
+    type = ItemType::CHAR;
   } else if (std::is_integral<V>::value) {
     if (std::is_signed<V>::value) {
-      item->type = ItemType::INT;
+      type = ItemType::INT;
     } else if (std::is_unsigned<V>::value) {
-      item->type = ItemType::UINT;
+      type = ItemType::UINT;
     } else {
-      item->type = ItemType::OTHER;
+      type = ItemType::OTHER;
     }
   } else if (std::is_floating_point<V>::value) {
-    item->type = ItemType::FLOAT;
+    type = ItemType::FLOAT;
   } else {
-    item->type = ItemType::OTHER;
+    type = ItemType::OTHER;
   }
-
   // Mask type for number of elements, 1, 2 or 3.
-  item->type = static_cast<ItemType>(
-      static_cast<int8_t>(item->type) | (N << 4));
+  item->info = static_cast<ItemType>(static_cast<int8_t>(type) | (N << 4));
 }

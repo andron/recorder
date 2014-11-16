@@ -43,11 +43,12 @@ Item::Item()
     : time(-1)
     , recorder_id(-1)
     , key(-1)
-    , type(ItemType::INIT) {
+    , info(ItemType::NOTSETUP) {
   std::memset(&data, 0, sizeof(data));
 }
 
 Item::Item(int8_t item_key)
     : Item() {
   key = item_key;
+  info = ItemType::INIT;
 }

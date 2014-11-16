@@ -86,7 +86,10 @@ class Recorder : public RecorderBase {
     auto const time = std::time(nullptr);
     auto& item = items_[static_cast<size_t>(enumkey)];
 
-    if (item.type == ItemType::INIT) {
+    if (item.info == ItemType::NOTSETUP) {
+      printf("Warning: Not setup item enum %d[%lu] \"%s\"\n",
+             enumkey, N, recorder_name_.c_str());
+    } else if (item.info == ItemType::INIT) {
       // At this point we know the data type. Will only happen once and
       // from now on the receiver will have to stick with this data type
       // for storage.
