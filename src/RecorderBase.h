@@ -67,14 +67,14 @@ class RecorderBase {
   static zmq::context_t* socket_context;
   static std::string     socket_address;
 
- private:
   // Local identifier for the recorder. This goes into the first frame
   // of the zeromq message for the backend to use as filtering and
   // sorting identification.
-  int32_t const external_id_;
+  int64_t const external_id_;
   int16_t const recorder_id_;
   std::string const recorder_name_;
 
+ private:
   std::unique_ptr<zmq::socket_t> socket_;
   static thread_local SendBuffer send_buffer;
   static thread_local SendBuffer::size_type send_buffer_index;
