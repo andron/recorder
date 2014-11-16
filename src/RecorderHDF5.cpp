@@ -66,9 +66,9 @@ RecorderHDF5::run() {
   auto t1 = std::chrono::high_resolution_clock::now();
   zmq::socket_t sock(*RecorderBase::socket_context, ZMQ_PULL);
   zmqutils::bind(&sock, RecorderBase::socket_address.c_str());
-  zmq::message_t zmsg(1024);
+  zmq::message_t zmsg;
   bool messages_to_process = true;
-  std::map<int32_t, int32_t> counter;
+  std::array<int32_t, 4096> counter;
   int64_t count = 0;
   zmq_pollitem_t pollitems[] = { { sock, 0, ZMQ_POLLIN, 0 } };
   while (poller_running_.load() || messages_to_process) {
@@ -130,7 +130,8 @@ RecorderHDF5::run() {
          count * 1000 / duration_msec,
          sizeof(Item) * count * 1000 / (mib * duration_msec));
 
-  for (auto const item : counter) {
-    printf("  %4d : %d\n", item.first, item.second);
+  for (size_t i = 0; i < counter.max_size(); ++i) {
+    if (counter[i] > 0)
+      printf("(RECV): %2lu:%d\n", i, counter[i]);
   }
 }
