@@ -42,6 +42,41 @@ typedef std::chrono::milliseconds msec;
 typedef std::chrono::microseconds usec;
 }
 
+enum class FOO { A, B, C, D, X, Y, Count };
+
+void funcProducer(int const id, int const num_rounds) {
+  char recorder_name[32];
+  char name1[8];
+  char name2[8];
+  char name3[8];
+  char name4[8];
+  snprintf(recorder_name, sizeof(recorder_name), "REC%04d", id);
+  snprintf(name1, sizeof(name1), "A%02d", id);
+  snprintf(name2, sizeof(name2), "B%02d", id);
+  snprintf(name3, sizeof(name3), "C%02d", id);
+  snprintf(name4, sizeof(name4), "D%02d", id);
+
+  Recorder<FOO> rec(recorder_name, id*100);
+  rec.setup(FOO::A, name1, "m");
+  rec.setup(FOO::B, name2, "ms");
+  rec.setup(FOO::C, name3, "kg");
+  rec.setup(FOO::D, name4, "m/s");
+  rec.setup(FOO::X, "testX", "xs");
+  rec.setup(FOO::Y, "testY", "ys");
+
+  for (int j = 0; j < num_rounds; ++j) {
+    rec.record(FOO::A, *reinterpret_cast<char*>(&j));
+    rec.record(FOO::B, 1.0/j);
+    rec.record(FOO::C, j*j);
+    rec.record(FOO::D, std::log(j));
+
+    double data[3] = {500.0*j*id, 600.0*j*id, 700.0*j*id};
+    rec.record(FOO::X, data);
+    rec.record(FOO::Y, {10*j*id, 20*j*id});
+  }
+}
+
+
 int
 main(int ac, char** av) {
   zmq::context_t ctx(1);
@@ -55,8 +90,6 @@ main(int ac, char** av) {
 
   RecorderHDF5 backend;
   backend.start();
-
-  enum class FOO { A, B, C, D, X, Y, Count };
 
   int num_threads  = 4;
   if (ac > 1)
@@ -73,36 +106,7 @@ main(int ac, char** av) {
 
   std::vector<std::thread> recorders;
   for (int i = 0; i < num_threads; ++i) {
-    recorders.emplace_back(std::thread(
-        [&i, &num_rounds] {
-          char recorder_name[32];
-          char name1[8];
-          char name2[8];
-          char name3[8];
-          char name4[8];
-          snprintf(recorder_name, sizeof(recorder_name), "REC%04d", i);
-          snprintf(name1, sizeof(name1), "A%02d", i);
-          snprintf(name2, sizeof(name2), "B%02d", i);
-          snprintf(name3, sizeof(name3), "C%02d", i);
-          snprintf(name4, sizeof(name4), "D%02d", i);
-
-          Recorder<FOO> rec(recorder_name, i);
-          rec.setup(FOO::A, name1, "m");
-          rec.setup(FOO::B, name2, "ms");
-          rec.setup(FOO::C, name3, "kg");
-          rec.setup(FOO::D, name4, "m/s");
-
-          for (int j = 0; j < num_rounds; ++j) {
-            rec.record(FOO::A, *reinterpret_cast<char*>(&j));
-            rec.record(FOO::B, 1.0/j);
-            rec.record(FOO::C, j*j);
-            rec.record(FOO::D, std::log(j));
-
-            double data[3] = {500.0*j*i, 600.0*j*i, 700.0*j*i};
-            rec.record(FOO::X, data);
-            rec.record(FOO::Y, {10*j*i, 20*j*i});
-          }
-        }));
+    recorders.emplace_back(std::thread(&funcProducer, i+1, num_rounds));
   }
 
   for (auto& th : recorders) {
