@@ -37,7 +37,7 @@ typedef std::chrono::microseconds usec;
 
 
 namespace {
-void printItem(Item const* item) {
+void __attribute__((unused)) printItem(Item const* item) {
   auto info = static_cast<int8_t>(item->info);
   printf("(DATA): %d, %4d, %4d  %x %x %x\n",
          item->time,
@@ -61,14 +61,12 @@ RecorderHDF5::~RecorderHDF5() {
 
 void
 RecorderHDF5::start() {
-  printf("Starting ...\n");
   poller_running_.store(true);
   poller_thread_ = std::thread(&RecorderHDF5::run, this);
 }
 
 void
 RecorderHDF5::stop() {
-  printf("Stopping ...\n");
   poller_running_.store(false);
   if (poller_thread_.joinable()) {
     poller_thread_.join();
@@ -96,7 +94,7 @@ RecorderHDF5::run() {
     switch (type) {
       case PayloadType::DATA: {
         sock.recv(&zmsg);
-        auto num_params = zmsg.size() / sizeof(Item);
+        auto const num_params = zmsg.size() / sizeof(Item);
         count += num_params;
         for (size_t i = 0; i < num_params; ++i) {
           auto* item = static_cast<Item*>(zmsg.data()) + i;
@@ -114,12 +112,12 @@ RecorderHDF5::run() {
                init.desc);
       } break;;
       case PayloadType::INIT_RECORDER: {
-        auto init = zmqutils::pop<InitRecorder>(&sock, &zmsg);
+        auto const pkg = zmqutils::pop<InitRecorder>(&sock, &zmsg);
         printf("(REC):  %4d(%ld) L%d '%s'\n",
-               init.recorder_id,
-               init.external_id,
-               init.recorder_num_items,
-               init.recorder_name);
+               pkg.recorder_id,
+               pkg.external_id,
+               pkg.recorder_num_items,
+               pkg.recorder_name);
         // int32_t rec_id = init.recorder_id;
         // counter.reserve(rec_id);
       } break;;

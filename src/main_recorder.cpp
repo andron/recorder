@@ -46,15 +46,20 @@ enum class FOO { A, B, C, D, X, Y, Count };
 
 void funcProducer(int const id, int const num_rounds) {
   char recorder_name[32];
+  snprintf(recorder_name, sizeof(recorder_name), "REC%02d", id);
+
   char name1[8];
   char name2[8];
   char name3[8];
   char name4[8];
-  snprintf(recorder_name, sizeof(recorder_name), "REC%04d", id);
-  snprintf(name1, sizeof(name1), "A%02d", id);
-  snprintf(name2, sizeof(name2), "B%02d", id);
-  snprintf(name3, sizeof(name3), "C%02d", id);
-  snprintf(name4, sizeof(name4), "D%02d", id);
+  char name5[8];
+  char name6[8];
+  snprintf(name1, sizeof(name1), "chr%02d", id);
+  snprintf(name2, sizeof(name2), "str%02d", id);
+  snprintf(name3, sizeof(name3), "i32%02d", id);
+  snprintf(name4, sizeof(name3), "i64%02d", id);
+  snprintf(name5, sizeof(name4), "uns%02d", id);
+  snprintf(name6, sizeof(name6), "dbl%02d", id);
 
   Recorder<FOO> rec(recorder_name, id*100);
   rec.setup(FOO::A, name1, "m");
@@ -95,7 +100,7 @@ main(int ac, char** av) {
   if (ac > 1)
     num_threads = std::atoi(av[1]);
 
-  int num_rounds = 1e5;
+  int num_rounds = 1e3;
   if (ac > 2)
     num_rounds = std::atoi(av[2]);
 

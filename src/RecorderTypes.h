@@ -56,7 +56,7 @@ struct PACKED InitRecorder {
 };
 
 enum class ItemType : std::int8_t {
-  NOTSETUP, INIT, OTHER, CHAR, INT, UINT, FLOAT, STR, };
+  NOTSETUP, INIT, OTHER, CHAR, INT, UINT, FLOAT, };
 
 struct PACKED InitItem {
   InitItem(int16_t recorder_id,
