@@ -84,8 +84,6 @@ class Recorder : public RecorderBase {
   // a string which must be parsed at the receiving side. Calling setup
   // multiple times with the same key value will have no effect, once
   // setup the key and unit will be locked.
-  //
-  // See the implementation for available instantiations of updateItem.
   void setup(K const enumkey,
              std::string const& name,
              std::string const& unit,
@@ -133,7 +131,7 @@ class Recorder : public RecorderBase {
     }
   }
 
-  // For simple single values record calls.
+  // For single values record calls.
   template<typename V>
   void record(K const enumkey, V const value) {
     record(enumkey, {value});
