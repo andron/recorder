@@ -32,20 +32,39 @@
 #include <memory>
 #include <string>
 
-namespace util {
-template<typename V, size_t N>
-static void updateData(Item* item, V const value);
+
+namespace {
+
+template<typename T, typename U, size_t N>
+void huffcopy(T (&dst)[N], U const (&src)[N]) {
+  switch (N) {
+    case 3: dst[2] = src[2];
+    case 2: dst[1] = src[1];
+    case 1: dst[0] = src[0];
+  };
+}
 
 template<typename V, size_t N>
 void updateData(Item* item, V const (&v)[N]) {
-  std::memcpy(&item->data, &v, sizeof(v));
+  if (std::is_same<V, int32_t>::value) {
+    int64_t dst[N];
+    huffcopy(dst, v);
+    std::memcpy(&item->data, &dst, sizeof(dst));
+  } else if (std::is_same<V, uint32_t>::value) {
+    uint64_t dst[N];
+    huffcopy(dst, v);
+    std::memcpy(&item->data, &dst, sizeof(dst));
+  } else if (std::is_same<V, float>::value) {
+    double dst[N];
+    huffcopy(dst, v);
+    std::memcpy(&item->data, &dst, sizeof(dst));
+  } else {
+    std::memcpy(&item->data, &v, sizeof(v));
+  }
 }
 
-template<>
-void updateData<char const*, 0>(Item* item, char const* v) {
-  std::strncpy(&item->data.s[0], &v[0], sizeof(item->data.s));
-}
-}  // namespace util
+}  // namespace
+
 
 template<typename K>
 class Recorder : public RecorderBase {
@@ -99,7 +118,7 @@ class Recorder : public RecorderBase {
       // Set recorder id
       item.recorder_id = recorder_id_;
       // Set data
-      util::updateData(&item, value);
+      updateData(&item, value);
       // Record
       RecorderBase::record(item);
     } else if (std::memcmp(&(item.data), &value, sizeof(value))) {
@@ -107,7 +126,7 @@ class Recorder : public RecorderBase {
       item.time = time;
       RecorderBase::record(item);
       // Then update value and record again at current time
-      util::updateData(&item, value);
+      updateData(&item, value);
       RecorderBase::record(item);
     } else {
       // Ignore unchanged value
