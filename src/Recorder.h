@@ -98,9 +98,8 @@ class Recorder : public RecorderBase {
   // difference between 1 (integer) and 1.0 (float) causing a new
   // recording event to occur.
   template<typename V, size_t N>
-  void record(K const enumkey, V const (&value)[N]) {
+  void record(K const enumkey, V const (&value)[N], uint64_t time = 1) {
     static_assert(N <= 3, "Maximum array size is 3");
-    auto const time = std::time(nullptr);
     auto& item = items_[static_cast<size_t>(enumkey)];
 
     if (item.info == ItemType::NOTSETUP) {
