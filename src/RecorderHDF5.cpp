@@ -75,7 +75,6 @@ RecorderHDF5::stop() {
 
 void
 RecorderHDF5::run() {
-  auto t1 = std::chrono::high_resolution_clock::now();
   zmq::socket_t sock(*RecorderBase::socket_context, ZMQ_PULL);
   zmqutils::bind(&sock, RecorderBase::socket_address.c_str());
   zmq::message_t zmsg;
@@ -83,6 +82,9 @@ RecorderHDF5::run() {
   std::array<int32_t, 4096> counter;
   int64_t count = 0;
   zmq_pollitem_t pollitems[] = { { sock, 0, ZMQ_POLLIN, 0 } };
+
+  auto t1 = std::chrono::high_resolution_clock::now();
+
   while (poller_running_.load() || messages_to_process) {
     if (!zmqutils::poll(pollitems)) {
       messages_to_process = false;
