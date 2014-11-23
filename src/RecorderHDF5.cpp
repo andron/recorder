@@ -76,10 +76,14 @@ RecorderHDF5::stop() {
 void
 RecorderHDF5::run() {
   zmq::socket_t sock(*RecorderBase::socket_context, ZMQ_PULL);
+  int constexpr recvhvm = 16000;
+  sock.setsockopt(ZMQ_RCVHWM, &recvhvm, sizeof(recvhvm));
   zmqutils::bind(&sock, RecorderBase::socket_address.c_str());
+
   zmq::message_t zmsg;
   bool messages_to_process = true;
   std::array<int32_t, 4096> counter;
+  counter.fill(0);
   int64_t count = 0;
   zmq_pollitem_t pollitems[] = { { sock, 0, ZMQ_POLLIN, 0 } };
 
@@ -147,7 +151,9 @@ RecorderHDF5::run() {
          sizeof(Item) * count * 1000 / (mib * duration_msec));
 
   for (size_t i = 0; i < counter.max_size(); ++i) {
-    if (counter[i] > 0)
-      printf("(RECV): %2lu:%d\n", i, counter[i]);
+    if (counter[i] == 0) {
+      continue;
+    }
+    printf("(RECV): %2lu:%d\n", i, counter[i]);
   }
 }
