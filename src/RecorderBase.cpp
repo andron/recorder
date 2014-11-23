@@ -55,14 +55,17 @@ RecorderBase::getAddress() {
   return RecorderBase::socket_address;
 }
 
+void
+RecorderBase::shutDown() {
+  if (RecorderBase::socket_) {
+    RecorderBase::socket_->close();
+  }
+}
+
 zmq::context_t* RecorderBase::socket_context = nullptr;
 std::string     RecorderBase::socket_address = "";
 
-thread_local
-RecorderBase::SendBuffer RecorderBase::send_buffer;
-
-thread_local
-RecorderBase::SendBuffer::size_type RecorderBase::send_buffer_index = 0;
+thread_local std::shared_ptr<zmq::socket_t> RecorderBase::socket_;
 // ----------------------------------------------------------------------------
 
 
@@ -94,7 +97,8 @@ class SocketCreator {
 RecorderBase::RecorderBase(std::string name, int32_t id)
     : external_id_(id)
     , recorder_id_(g_recorder_id.fetch_add(1))
-    , recorder_name_(name) {
+    , recorder_name_(name)
+    , send_buffer_index(0) {
   bool error = false;
 
   if (RecorderBase::socket_context == nullptr) {
@@ -112,18 +116,14 @@ RecorderBase::RecorderBase(std::string name, int32_t id)
     std::exit(1);
   }
 
-  int constexpr linger = 3000;
-  int constexpr sendtimeout = 2;
-
-  socket_.reset(new zmq::socket_t(*RecorderBase::socket_context, ZMQ_PUSH));
-  socket_->setsockopt(ZMQ_LINGER, &linger, sizeof(linger));
-  socket_->setsockopt(ZMQ_SNDTIMEO, &sendtimeout, sizeof(sendtimeout));
-  zmqutils::connect(socket_.get(), RecorderBase::socket_address);
+  static thread_local SocketCreator socket_creator(
+      RecorderBase::socket_context,
+      RecorderBase::socket_address,
+      &socket_);
 }
 
 RecorderBase::~RecorderBase() {
   flushSendBuffer();
-  socket_->close();
 }
 
 void

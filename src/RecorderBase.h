@@ -55,6 +55,9 @@ class RecorderBase {
   // Get socket address.
   static std::string getAddress();
 
+  // Stop all operations.
+  static void shutDown();
+
  protected:
   void flushSendBuffer();
 
@@ -75,13 +78,8 @@ class RecorderBase {
   std::string const recorder_name_;
 
  private:
-  std::unique_ptr<zmq::socket_t> socket_;
+  static thread_local std::shared_ptr<zmq::socket_t> socket_;
 
-  // TODO(andro) Make these local to each recorder but much smaller, it
-  // will then result in a data package on the receiver side that is
-  // from a single recorder and thus easier to handle. Performance wise
-  // there will be no need for jumping back and forth between different
-  // H5-Groups in the HDF5 backend case.
-  static thread_local SendBuffer send_buffer;
-  static thread_local SendBuffer::size_type send_buffer_index;
+  SendBuffer send_buffer;
+  SendBuffer::size_type send_buffer_index;
 };

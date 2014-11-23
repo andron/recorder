@@ -162,5 +162,7 @@ main(int ac, char** av) {
 
   backend.stop();
 
+  RecorderBase::shutDown();
+
   return 0;
 }
