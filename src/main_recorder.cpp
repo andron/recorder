@@ -40,47 +40,86 @@
 namespace {
 typedef std::chrono::milliseconds msec;
 typedef std::chrono::microseconds usec;
+typedef std::chrono::nanoseconds  nsec;
 }
 
-enum class FOO { A, B, C, D, X, Y, Count };
+enum class FOO { A, B, C, D, E, X, Y, Z, Count };
+enum class BAR { A, B, C, D, E, X, Y, Z, Count };
+enum class FUU { A, B, C, D, E, X, Y, Z, Count };
+enum class BER { A, B, C, D, E, X, Y, Z, Count };
+
+template<typename T>
+void
+funcSetupRecorder(Recorder<T>& rec, char const* prefix, int const id) {
+  char name[8][12];
+
+  snprintf(name[0], 12, "%s-chr%02d", prefix, id);
+  snprintf(name[1], 12, "%s-dbl%02d", prefix, id);
+  snprintf(name[2], 12, "%s-i32%02d", prefix, id);
+  snprintf(name[3], 12, "%s-i64%02d", prefix, id);
+  snprintf(name[4], 12, "%s-uns%02d", prefix, id);
+  snprintf(name[5], 12, "%s-af3%02d", prefix, id);
+  snprintf(name[6], 12, "%s-ad3%02d", prefix, id);
+  snprintf(name[7], 12, "%s-id2%02d", prefix, id);
+
+  rec.setup(T::A, name[0], "m");
+  rec.setup(T::B, name[1], "s");
+  rec.setup(T::C, name[2], "C");
+  rec.setup(T::D, name[3], "u");
+  rec.setup(T::E, name[4], "g");
+  rec.setup(T::X, name[5], "-");
+  rec.setup(T::Y, name[6], "-");
+  rec.setup(T::Z, name[7], "-");
+}
+
+template<typename T>
+void
+funcRecordRecorder(Recorder<T>& rec, int x) {
+  float  data1[3] = {500.0f*x, 600.0f*x, 700.0f*x};
+  double data2[3] = {500.0*x, 600.0*x, 700.0*x};
+  rec.record(T::A, *reinterpret_cast<char*>(&x));
+  rec.record(T::B, std::log(1+x));
+  rec.record(T::C, reinterpret_cast<int32_t>(-x*x));
+  rec.record(T::D, static_cast<int64_t>(-x*x));
+  rec.record(T::E, static_cast<uint64_t>(x*x));
+  rec.record(T::X, data1);
+  rec.record(T::Y, data2);
+  rec.record(T::Z, {10*x, 20*x});
+}
+
 
 void funcProducer(int const id, int const num_rounds) {
+  std::string prefix;
   char recorder_name[32];
-  snprintf(recorder_name, sizeof(recorder_name), "REC%02d", id);
 
-  char name1[8];
-  char name2[8];
-  char name3[8];
-  char name4[8];
-  char name5[8];
-  char name6[8];
-  snprintf(name1, sizeof(name1), "chr%02d", id);
-  snprintf(name2, sizeof(name2), "str%02d", id);
-  snprintf(name3, sizeof(name3), "i32%02d", id);
-  snprintf(name4, sizeof(name3), "i64%02d", id);
-  snprintf(name5, sizeof(name4), "uns%02d", id);
-  snprintf(name6, sizeof(name6), "dbl%02d", id);
+  prefix = "FOO";
+  snprintf(recorder_name, sizeof(recorder_name), "%s%02d", prefix.c_str() , id);
+  Recorder<FOO> recfoo(recorder_name, random() % (1<<16));
+  funcSetupRecorder(recfoo, prefix.c_str(), id);
 
-  Recorder<FOO> rec(recorder_name, id*100);
-  rec.setup(FOO::A, name1, "m");
-  rec.setup(FOO::B, name2, "ms");
-  rec.setup(FOO::C, name3, "kg");
-  rec.setup(FOO::D, name4, "m/s");
-  rec.setup(FOO::X, "testX", "xs");
-  rec.setup(FOO::Y, "testY", "ys");
+  prefix = "BAR";
+  snprintf(recorder_name, sizeof(recorder_name), "%s%02d", prefix.c_str() , id);
+  Recorder<BAR> recbar(recorder_name, random() % (1<<16));
+  funcSetupRecorder(recbar, prefix.c_str(), id);
+
+  prefix = "FUU";
+  snprintf(recorder_name, sizeof(recorder_name), "%s%02d", prefix.c_str() , id);
+  Recorder<FUU> recfuu(recorder_name, random() % (1<<16));
+  funcSetupRecorder(recfuu, prefix.c_str(), id);
+
+  prefix = "BER";
+  snprintf(recorder_name, sizeof(recorder_name), "%s%02d", prefix.c_str() , id);
+  Recorder<BER> recber(recorder_name, random() % (1<<16));
+  funcSetupRecorder(recber, prefix.c_str(), id);
 
   for (int j = 0; j < num_rounds; ++j) {
-    rec.record(FOO::A, *reinterpret_cast<char*>(&j));
-    rec.record(FOO::B, 1.0/j);
-    rec.record(FOO::C, j*j);
-    rec.record(FOO::D, std::log(j));
-
-    double data[3] = {500.0*j*id, 600.0*j*id, 700.0*j*id};
-    rec.record(FOO::X, data);
-    rec.record(FOO::Y, {10*j*id, 20*j*id});
+    std::this_thread::sleep_for(nsec(10));
+    funcRecordRecorder(recfoo, j);
+    funcRecordRecorder(recbar, j);
+    funcRecordRecorder(recfuu, j);
+    funcRecordRecorder(recber, j);
   }
 }
-
 
 int
 main(int ac, char** av) {
