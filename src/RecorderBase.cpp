@@ -30,6 +30,7 @@
 #include <cstring>
 #include <memory>
 #include <string>
+#include <thread>
 
 #include <zmq.hpp>
 
