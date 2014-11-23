@@ -47,6 +47,7 @@ class RecorderHDF5 : public RecorderBase {
  private:
   void run();
 
+  std::atomic<bool> verbose_mode_;
   std::atomic<bool> poller_running_;
   std::thread poller_thread_;
 };

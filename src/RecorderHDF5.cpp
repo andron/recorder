@@ -104,22 +104,24 @@ RecorderHDF5::run() {
       } break;;
       case PayloadType::INIT_ITEM: {
         auto init = zmqutils::pop<InitItem>(&sock, &zmsg);
-        printf("(ITEM): %4d-%d '%s' '%s' '%s'\n",
-               init.recorder_id,
-               init.key,
-               init.name,
-               init.unit,
-               init.desc);
+        if (verbose_mode_.load()) {
+          printf("(ITEM): %4d-%d '%s' '%s' '%s'\n",
+                 init.recorder_id,
+                 init.key,
+                 init.name,
+                 init.unit,
+                 init.desc);
+        }
       } break;;
       case PayloadType::INIT_RECORDER: {
         auto const pkg = zmqutils::pop<InitRecorder>(&sock, &zmsg);
-        printf("(REC):  %4d(%ld) L%d '%s'\n",
-               pkg.recorder_id,
-               pkg.external_id,
-               pkg.recorder_num_items,
-               pkg.recorder_name);
-        // int32_t rec_id = init.recorder_id;
-        // counter.reserve(rec_id);
+        if (verbose_mode_.load()) {
+          printf("(REC):  %4d(%ld) L%d '%s'\n",
+                 pkg.recorder_id,
+                 pkg.external_id,
+                 pkg.recorder_num_items,
+                 pkg.recorder_name);
+        }
       } break;;
       default:
         break;;
