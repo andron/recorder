@@ -57,14 +57,14 @@ void
 funcSetupRecorder(Recorder<T>& rec, char const* prefix, int const id) {
   char name[8][12];
 
-  snprintf(name[0], 12, "%s-chr%02d", prefix, id);
-  snprintf(name[1], 12, "%s-dbl%02d", prefix, id);
-  snprintf(name[2], 12, "%s-i32%02d", prefix, id);
-  snprintf(name[3], 12, "%s-i64%02d", prefix, id);
-  snprintf(name[4], 12, "%s-uns%02d", prefix, id);
-  snprintf(name[5], 12, "%s-af3%02d", prefix, id);
-  snprintf(name[6], 12, "%s-ad3%02d", prefix, id);
-  snprintf(name[7], 12, "%s-id2%02d", prefix, id);
+  snprintf(name[0], sizeof(name[0]), "%s-chr%02d", prefix, id);
+  snprintf(name[1], sizeof(name[1]), "%s-dbl%02d", prefix, id);
+  snprintf(name[2], sizeof(name[2]), "%s-i32%02d", prefix, id);
+  snprintf(name[3], sizeof(name[3]), "%s-i64%02d", prefix, id);
+  snprintf(name[4], sizeof(name[4]), "%s-uns%02d", prefix, id);
+  snprintf(name[5], sizeof(name[5]), "%s-af3%02d", prefix, id);
+  snprintf(name[6], sizeof(name[6]), "%s-ad3%02d", prefix, id);
+  snprintf(name[7], sizeof(name[7]), "%s-id2%02d", prefix, id);
 
   rec.setup(T::A, name[0], "m");
   rec.setup(T::B, name[1], "s");
@@ -127,7 +127,6 @@ void funcProducer(int const id, int const num_rounds) {
 
 int
 main(int ac, char** av) {
-
   int num_rec_rounds  = 2;
   int num_rec_threads = 2;
   int num_ctx_threads = 1;

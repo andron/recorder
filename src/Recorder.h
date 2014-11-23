@@ -33,7 +33,7 @@
 #include <string>
 
 
-namespace {
+namespace util {
 
 template<typename T, typename U, size_t N>
 void huffcopy(T (&dst)[N], U const (&src)[N]) {
@@ -41,7 +41,7 @@ void huffcopy(T (&dst)[N], U const (&src)[N]) {
     case 3: dst[2] = src[2];
     case 2: dst[1] = src[1];
     case 1: dst[0] = src[0];
-  };
+  }
 }
 
 template<typename V, size_t N>
@@ -63,7 +63,7 @@ void updateData(Item* item, V const (&v)[N]) {
   }
 }
 
-}  // namespace
+}  // namespace util
 
 
 template<typename K>
@@ -115,7 +115,7 @@ class Recorder : public RecorderBase {
       // Set recorder id
       item.recorder_id = recorder_id_;
       // Set data
-      updateData(&item, value);
+      util::updateData(&item, value);
       // Record
       RecorderBase::record(item);
     } else if (std::memcmp(&(item.data), &value, sizeof(value))) {
@@ -123,7 +123,7 @@ class Recorder : public RecorderBase {
       item.time = time;
       RecorderBase::record(item);
       // Then update value and record again at current time
-      updateData(&item, value);
+      util::updateData(&item, value);
       RecorderBase::record(item);
     } else {
       // Ignore unchanged value
