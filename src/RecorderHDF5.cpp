@@ -60,7 +60,8 @@ RecorderHDF5::~RecorderHDF5() {
 }
 
 void
-RecorderHDF5::start() {
+RecorderHDF5::start(bool verbose) {
+  verbose_mode_.store(verbose);
   poller_running_.store(true);
   poller_thread_ = std::thread(&RecorderHDF5::run, this);
 }

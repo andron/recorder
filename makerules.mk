@@ -24,7 +24,7 @@ recordertest_SRCS := \
 	src/RecorderHDF5.cpp
 
 recordertest_USES := zeromq protobuf
-recordertest_LINK := zmq protobuf pthread
+recordertest_LINK := zmq protobuf pthread boost_program_options
 
 servertest_SRCS := src/main_server.cpp
 servertest_USES := zeromq

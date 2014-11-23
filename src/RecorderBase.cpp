@@ -100,18 +100,15 @@ RecorderBase::RecorderBase(std::string name, int32_t id)
     , recorder_name_(name)
     , send_buffer_index(0) {
   bool error = false;
-
   if (RecorderBase::socket_context == nullptr) {
     Error("setContext() must be called before instantiation");
     error = true;
   }
-
   if (RecorderBase::socket_address.empty()) {
     Error("Socket address empty, setAddress() must be called");
     Error("before first instantiation");
     error = true;
   }
-
   if (error) {
     std::exit(1);
   }

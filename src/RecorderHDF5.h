@@ -41,7 +41,7 @@ class RecorderHDF5 : public RecorderBase {
   RecorderHDF5();
   ~RecorderHDF5();
 
-  void start();
+  void start(bool verbose);
   void stop();
 
  private:

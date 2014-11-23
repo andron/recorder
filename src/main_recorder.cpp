@@ -28,6 +28,8 @@
 
 #include "zmqutils.h"
 
+#include <boost/program_options.hpp>
+
 #include <zmq.hpp>
 
 #include <atomic>
@@ -36,6 +38,8 @@
 #include <string>
 #include <thread>
 #include <vector>
+
+namespace po = boost::program_options;
 
 namespace {
 typedef std::chrono::milliseconds msec;
@@ -123,9 +127,41 @@ void funcProducer(int const id, int const num_rounds) {
 
 int
 main(int ac, char** av) {
-  zmq::context_t ctx(1);
 
-  std::string const addr("inproc://recorder");
+  int num_rec_rounds  = 2;
+  int num_rec_threads = 2;
+  int num_ctx_threads = 1;
+  std::string addr = "inproc://recorder";
+
+  // ----------------------------------------------------------------------
+  po::options_description opts("Options", 80, 120);
+  opts.add_options()
+      ("help,h", "Show help")
+      ("verbose,v", "Be verbose")
+      ("rounds,r",
+       po::value<int>(&num_rec_rounds)->default_value(num_rec_rounds),
+       "Number of recording rounds")
+      ("threads,t",
+       po::value<int>(&num_rec_threads)->default_value(num_rec_threads),
+       "Number of recording threads")
+      ("context_io",
+       po::value<int>(&num_ctx_threads)->default_value(num_ctx_threads),
+       "Number of ZMQ context io threads")
+      ("address,a",
+       po::value<std::string>(&addr)->default_value(addr),
+       "Socket address");
+
+  po::variables_map vm;
+  po::store(po::parse_command_line(ac, av, opts), vm);
+  po::notify(vm);
+
+  if (vm.count("help")) {
+    opts.print(std::cout);
+    std::exit(0);
+  }
+  // ----------------------------------------------------------------------
+
+  zmq::context_t ctx(num_ctx_threads);
 
   RecorderBase::setContext(&ctx);
   RecorderBase::setAddress(addr);
@@ -133,24 +169,32 @@ main(int ac, char** av) {
   printf("Item size: %lu\n", sizeof(Item));
 
   RecorderHDF5 backend;
-  backend.start();
+  backend.start(vm.count("verbose"));
 
-  int num_threads  = 4;
-  if (ac > 1)
-    num_threads = std::atoi(av[1]);
+  int const num_recorder_per_thread = 4;
+  int const num_messages_per_recorder = 8;
 
-  int num_rounds = 1e3;
-  if (ac > 2)
-    num_rounds = std::atoi(av[2]);
+  // Each item recording generates two messages per round except for the
+  // first, which only creates a single message.
+  auto num_messages = num_rec_threads *
+                      num_recorder_per_thread *
+                      num_messages_per_recorder *
+                      (2 * num_rec_rounds - 1);
 
-  auto num_messages = num_threads * 6 * (2 * num_rounds - 1);
-  printf("Running %d threads, sending 6*%d records -> %d (%ldMiB)\n",
-         num_threads, num_rounds, num_messages,
+  printf("Running %d threads %d rounds\n"
+         "  %d recorders per thread\n"
+         "  %d items per recorder\n"
+         "Total %d (%ldMiB)\n",
+         num_rec_threads,
+         num_rec_rounds,
+         num_recorder_per_thread,
+         num_messages_per_recorder,
+         num_messages,
          (num_messages * sizeof(Item))/(1024*1024));
 
   std::vector<std::thread> recorders;
-  for (int i = 0; i < num_threads; ++i) {
-    recorders.emplace_back(std::thread(&funcProducer, i+1, num_rounds));
+  for (int i = 0; i < num_rec_threads; ++i) {
+    recorders.emplace_back(std::thread(&funcProducer, i+1, num_rec_rounds));
   }
 
   for (auto& th : recorders) {
