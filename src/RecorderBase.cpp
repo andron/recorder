@@ -36,11 +36,6 @@
 #include "zmqutils.h"
 
 
-namespace {
-void Error(char const* msg) { std::fprintf(stderr, "%s\n", msg); }
-std::atomic<int16_t> g_recorder_id = ATOMIC_VAR_INIT(0);
-}
-
 // Static definitions for RecorderBase
 // ----------------------------------------------------------------------------
 void
@@ -68,6 +63,31 @@ RecorderBase::SendBuffer RecorderBase::send_buffer;
 thread_local
 RecorderBase::SendBuffer::size_type RecorderBase::send_buffer_index = 0;
 // ----------------------------------------------------------------------------
+
+
+namespace {
+void Error(char const* msg) { std::fprintf(stderr, "%s\n", msg); }
+std::atomic<int16_t> g_recorder_id = ATOMIC_VAR_INIT(0);
+
+// Socket creator class
+class SocketCreator {
+ public:
+  SocketCreator(zmq::context_t* ctx,
+                std::string const& address,
+                std::shared_ptr<zmq::socket_t>* socket) {
+    printf("%s: %lu\n", __func__, std::this_thread::get_id());
+    int constexpr linger = 3000;
+    int constexpr sendtimeout = 2;
+    int constexpr sendhwm = 16000;
+    socket->reset(new zmq::socket_t(*ctx, ZMQ_PUSH));
+    (*socket)->setsockopt(ZMQ_LINGER, &linger, sizeof(linger));
+    (*socket)->setsockopt(ZMQ_SNDTIMEO, &sendtimeout, sizeof(sendtimeout));
+    (*socket)->setsockopt(ZMQ_SNDHWM, &sendhwm, sizeof(sendhwm));
+    zmqutils::connect(socket->get(), address);
+  }
+};
+
+}  // namespace
 
 
 RecorderBase::RecorderBase(std::string name, int32_t id)
