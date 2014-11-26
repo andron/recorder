@@ -81,14 +81,14 @@ void
 funcRecordRecorder(Recorder<T>& rec, int x) {
   float  data1[3] = {500.0f*x, 600.0f*x, 700.0f*x};
   double data2[3] = {500.0*x, 600.0*x, 700.0*x};
-  rec.record(T::A, *reinterpret_cast<char*>(&x));
-  rec.record(T::B, std::log(1+x));
-  rec.record(T::C, reinterpret_cast<int32_t>(-x*x));
-  rec.record(T::D, static_cast<int64_t>(-x*x));
-  rec.record(T::E, static_cast<uint64_t>(x*x));
-  rec.record(T::X, data1);
-  rec.record(T::Y, data2);
-  rec.record(T::Z, {10*x, 20*x});
+  rec.record(T::A, *reinterpret_cast<char*>(&x), x);
+  rec.record(T::B, std::log(1+x), x);
+  rec.record(T::C, reinterpret_cast<int32_t>(-x*x), x);
+  rec.record(T::D, static_cast<int64_t>(-x*x), x);
+  rec.record(T::E, static_cast<uint64_t>(x*x), x);
+  rec.record(T::X, data1, x);
+  rec.record(T::Y, data2, x);
+  rec.record(T::Z, {10*x, 20*x}, x);
 }
 
 
