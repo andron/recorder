@@ -46,16 +46,16 @@ void huffcopy(T (&dst)[N], U const (&src)[N]) {
 
 template<typename V, size_t N>
 void updateData(Item* item, V const (&v)[N]) {
-  if (std::is_same<V, int32_t>::value) {
+  if (std::is_same<V, float>::value) {
+    double dst[N];
+    huffcopy(dst, v);
+    std::memcpy(&item->data, &dst, sizeof(dst));
+  } else if (std::is_same<V, int32_t>::value) {
     int64_t dst[N];
     huffcopy(dst, v);
     std::memcpy(&item->data, &dst, sizeof(dst));
   } else if (std::is_same<V, uint32_t>::value) {
     uint64_t dst[N];
-    huffcopy(dst, v);
-    std::memcpy(&item->data, &dst, sizeof(dst));
-  } else if (std::is_same<V, float>::value) {
-    double dst[N];
     huffcopy(dst, v);
     std::memcpy(&item->data, &dst, sizeof(dst));
   } else {
