@@ -91,10 +91,10 @@ RecorderHDF5::run() {
         auto const num_params = zmsg.size() / sizeof(Item);
         count += num_params;
         counter[rcid] += num_params;
-        for (size_t i = 0; i < num_params; ++i) {
-          auto* item = static_cast<Item*>(zmsg.data()) + i;
-          int32_t length = item->length;
-        }
+        //for (size_t i = 0; i < num_params; ++i) {
+        //  auto* item = static_cast<Item*>(zmsg.data()) + i;
+        //  int32_t length = item->length;
+        //}
       } break;;
       case PayloadType::INIT_ITEM: {
         auto init = zmqutils::pop<InitItem>(&sock, &zmsg);

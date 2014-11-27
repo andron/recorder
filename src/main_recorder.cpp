@@ -117,7 +117,7 @@ void funcProducer(int const id, int const num_rounds) {
   funcSetupRecorder(recber, prefix.c_str(), id);
 
   for (int j = 0; j < num_rounds; ++j) {
-    std::this_thread::sleep_for(nsec(10));
+    //std::this_thread::sleep_for(nsec(10));
     funcRecordRecorder(recfoo, j);
     funcRecordRecorder(recbar, j);
     funcRecordRecorder(recfuu, j);
