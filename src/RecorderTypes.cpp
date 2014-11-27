@@ -41,14 +41,14 @@ InitItem::InitItem(int16_t item_recorder_id,
 
 Item::Item()
     : time(-1)
-    , recorder_id(-1)
     , key(-1)
-    , info(ItemType::NOTSETUP) {
+    , type(ItemType::NOTSETUP)
+    , length(0) {
   std::memset(&data, 0, sizeof(data));
 }
 
 Item::Item(int8_t item_key)
     : Item() {
   key = item_key;
-  info = ItemType::INIT;
+  type = ItemType::INIT;
 }

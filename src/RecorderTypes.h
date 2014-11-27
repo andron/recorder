@@ -76,18 +76,10 @@ struct PACKED Item {
   Item();
   explicit Item(int8_t key);
 
-  ItemType getType() const {
-    return static_cast<ItemType>(static_cast<int8_t>(info) & 0x0F);
-  }
-
-  size_t getLength() const {
-    return static_cast<size_t>(static_cast<int8_t>(info) >> 4);
-  }
-
   int32_t  time;
-  int16_t  recorder_id;
-  int8_t   key;
-  ItemType info;
+  int16_t  key;
+  ItemType type;
+  int8_t   length;
   union Data {
     char     c;
     int64_t  i;
@@ -122,6 +114,6 @@ void setDataType(Item* item) {
   } else {
     type = ItemType::OTHER;
   }
-  // Mask type for number of elements, 1, 2 or 3.
-  item->info = static_cast<ItemType>(static_cast<int8_t>(type) | (N << 4));
+  item->type = type;
+  item->length = N;
 }

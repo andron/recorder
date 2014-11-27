@@ -35,20 +35,6 @@
 typedef std::chrono::milliseconds msec;
 typedef std::chrono::microseconds usec;
 
-
-namespace {
-void __attribute__((unused)) printItem(Item const* item) {
-  auto info = static_cast<int8_t>(item->info);
-  printf("(DATA): %d, %4d, %4d  %x %x %x\n",
-         item->time,
-         item->recorder_id,
-         item->key,
-         item->info,
-         info & 0x0F,
-         info >> 4);
-}
-}  // namespace
-
 RecorderHDF5::RecorderHDF5()
     : RecorderBase("HDF5Backend") {
 }
@@ -100,13 +86,14 @@ RecorderHDF5::run() {
 
     switch (type) {
       case PayloadType::DATA: {
+        auto rcid = zmqutils::pop<int16_t>(&sock, &zmsg);
         sock.recv(&zmsg);
         auto const num_params = zmsg.size() / sizeof(Item);
         count += num_params;
+        counter[rcid] += num_params;
         for (size_t i = 0; i < num_params; ++i) {
           auto* item = static_cast<Item*>(zmsg.data()) + i;
-          int32_t rec_id = item->recorder_id;
-          counter[rec_id] += 1;
+          int32_t length = item->length;
         }
       } break;;
       case PayloadType::INIT_ITEM: {

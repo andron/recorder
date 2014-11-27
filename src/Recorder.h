@@ -102,18 +102,16 @@ class Recorder : public RecorderBase {
     static_assert(N <= 3, "Maximum array size is 3");
     auto& item = items_[static_cast<size_t>(enumkey)];
 
-    if (item.info == ItemType::NOTSETUP) {
+    if (item.type == ItemType::NOTSETUP) {
       printf("Warning: Not setup item enum %d[%lu] \"%s\"\n",
              enumkey, N, recorder_name_.c_str());
-    } else if (item.info == ItemType::INIT) {
+    } else if (item.type == ItemType::INIT) {
       // At this point we know the data type. Will only happen once and
       // from now on the receiver will have to stick with this data type
       // for storage.
       setDataType<V, N>(&item);
       // Set time
       item.time = time;
-      // Set recorder id
-      item.recorder_id = recorder_id_;
       // Set data
       util::updateData(&item, value);
       // Record

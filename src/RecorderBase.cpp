@@ -129,6 +129,7 @@ RecorderBase::flushSendBuffer() {
   auto constexpr item_size = sizeof(decltype(send_buffer)::value_type);
   if (send_buffer_index > 0) {
     socket_->send(&frame, sizeof(frame), ZMQ_SNDMORE);
+    socket_->send(&recorder_id_, sizeof(recorder_id_), ZMQ_SNDMORE);
     socket_->send(send_buffer.data(), send_buffer_index * item_size);
     send_buffer_index = 0;
   }
