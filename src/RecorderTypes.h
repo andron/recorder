@@ -62,14 +62,12 @@ struct PACKED InitItem {
   InitItem(int16_t recorder_id,
            int16_t key,
            std::string const& name,
-           std::string const& unit,
            std::string const& desc);
 
   int16_t recorder_id;
   int16_t key;
   char name[32];
-  char unit[32];
-  char desc[188];
+  char desc[220];
 };
 
 struct PACKED Item {

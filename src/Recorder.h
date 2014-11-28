@@ -86,11 +86,10 @@ class Recorder : public RecorderBase {
   // setup the key and unit will be locked.
   void setup(K const enumkey,
              std::string const& name,
-             std::string const& unit,
              std::string const& desc = "N/A") {
     auto const key = static_cast<decltype(Item::key)>(enumkey);
     items_[key] = Item(key);
-    RecorderBase::setupItem(InitItem(recorder_id_, key, name, unit, desc));
+    RecorderBase::setupItem(InitItem(recorder_id_, key, name, desc));
   }
 
   // Record parameter with key, previously setup using setup(). The

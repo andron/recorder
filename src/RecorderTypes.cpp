@@ -30,12 +30,10 @@
 InitItem::InitItem(int16_t item_recorder_id,
                    int16_t item_key,
                    std::string const& item_name,
-                   std::string const& item_unit,
                    std::string const& item_desc)
     : recorder_id(item_recorder_id)
     , key(item_key) {
   std::strncpy(name, item_name.c_str(), sizeof(name));
-  std::strncpy(unit, item_unit.c_str(), sizeof(unit));
   std::strncpy(desc, item_desc.c_str(), sizeof(desc));
 }
 

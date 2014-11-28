@@ -99,11 +99,10 @@ RecorderHDF5::run() {
       case PayloadType::INIT_ITEM: {
         auto init = zmqutils::pop<InitItem>(&sock, &zmsg);
         if (verbose_mode_.load()) {
-          printf("(ITEM): %4d-%d '%s' '%s' '%s'\n",
+          printf("(ITEM): %4d-%d '%s' '%s'\n",
                  init.recorder_id,
                  init.key,
                  init.name,
-                 init.unit,
                  init.desc);
         }
       } break;;
