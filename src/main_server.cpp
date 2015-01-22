@@ -1,7 +1,7 @@
 // -*- mode:c++; indent-tabs-mode:nil; -*-
 
 /*
-  Copyright (c) 2014, Anders Ronnbrant, anders.ronnbrant@gmail.com
+  Copyright (c) 2014, 2015, Anders Ronnbrant, anders.ronnbrant@gmail.com
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
