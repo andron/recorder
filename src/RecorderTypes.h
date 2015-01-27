@@ -56,7 +56,7 @@ struct PACKED InitRecorder {
 };
 
 enum class ItemType : std::int8_t {
-  NOTSETUP, INIT, OTHER, CHAR, INT, UINT, FLOAT, };
+  NOTSETUP, INIT, INT, UINT, FLOAT, };
 
 struct PACKED InitItem {
   InitItem(int16_t recorder_id,
@@ -79,14 +79,12 @@ struct PACKED Item {
   ItemType type;
   int8_t   length;
   union Data {
-    char     c;
     int64_t  i;
     uint64_t u;
     double   d;
     int64_t  v_i[3];
-    uint64_t v_u[3];
+    int64_t  v_u[3];
     double   v_d[3];
-    char     s[sizeof(v_i)];
   } data;
 };
 
@@ -96,21 +94,17 @@ CHECK_POW2_SIZE(Item);
 
 template<typename V, int N>
 void setDataType(Item* item) {
-  ItemType type;
-  if (std::is_same<char, V>::value) {
-    type = ItemType::CHAR;
-  } else if (std::is_integral<V>::value) {
-    if (std::is_signed<V>::value) {
-      type = ItemType::INT;
-    } else if (std::is_unsigned<V>::value) {
+  ItemType type = ItemType::NOTSETUP;
+  if (std::is_integral<V>::value) {
+    if (std::is_unsigned<V>::value) {
       type = ItemType::UINT;
     } else {
-      type = ItemType::OTHER;
+      // Not unsigned, assume signed
+      type = ItemType::INT;
     }
-  } else if (std::is_floating_point<V>::value) {
-    type = ItemType::FLOAT;
   } else {
-    type = ItemType::OTHER;
+    // Not integer, assume float
+    type = ItemType::FLOAT;
   }
   item->type = type;
   item->length = N;
