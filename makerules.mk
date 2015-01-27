@@ -13,7 +13,12 @@ $(call setup)
 # --------------------------------------------------
 
 _CXXFLAGS := -std=c++11
-_LDFLAGS  := -rdynamic -Wl,-rpath=../lib -Wl,-rpath=./lib -Wl,-rpath=$(TGTDIR)
+_LDFLAGS  := \
+	-rdynamic \
+	-Wl,-z,origin \
+	-Wl,-rpath=\$$$$ORIGIN/../lib \
+	-Wl,-rpath=$(TGTDIR) \
+	-Wl,-rpath=$(ZEROMQ_HOME)/lib
 
 TARGETS := recordertest servertest foo
 
