@@ -66,6 +66,8 @@ funcSetupRecorder(Recorder<T>& rec, char const* prefix, int const id) {
   snprintf(name[6], sizeof(name[6]), "%s-ad3%02d", prefix, id);
   snprintf(name[7], sizeof(name[7]), "%s-id2%02d", prefix, id);
 
+  // key[enum], name[string], type[enum], description[string], compare[pointer]
+
   rec.setup(T::A, name[0], "m");
   rec.setup(T::B, name[1], "s");
   rec.setup(T::C, name[2], "C");
@@ -165,6 +167,7 @@ main(int ac, char** av) {
   RecorderBase::setContext(&ctx);
   RecorderBase::setAddress(addr);
 
+  printf("PID:       %d\n", getpid());
   printf("Item size: %lu\n", sizeof(Item));
 
   RecorderHDF5 backend;

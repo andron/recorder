@@ -12,7 +12,7 @@ REQUIRES := zeromq
 $(call setup)
 # --------------------------------------------------
 
-_CXXFLAGS := -std=c++11
+_CXXFLAGS := -std=c++11 -pedantic
 _LDFLAGS  := \
 	-rdynamic \
 	-Wl,-z,origin \

@@ -35,46 +35,70 @@ class context_t;
 class socket_t;
 }
 
+// RecorderBase shall simplify the sharing of socket addresses and
+// communication infrastructure for producers and recorders. Both
+// context and sink address shall be the same for all instances.
 class RecorderBase {
  public:
   RecorderBase(RecorderBase const&) = delete;
   RecorderBase& operator= (RecorderBase const&) = delete;
 
+  // Fixed size send buffer to decrese the number of zmq send
+  // operations.
   static int constexpr SEND_BUFFER_SIZE = 1<<10;
   typedef std::array<Item, SEND_BUFFER_SIZE> SendBuffer;
 
-  RecorderBase(std::string name, int32_t external_id = 0);
+  // Ctor takes a string name and integer id for external
+  // identification. The string is for having a easy-to-read name, the
+  // int id is for fast lookup if needed.
+  RecorderBase(std::string const& name, int32_t external_id = 0);
   ~RecorderBase();
 
-  // Set class context to use for ZeroMQ communication.
+  // Set context to use for ZeroMQ communication. The purpose is to
+  // share a single zmq context between all threads.
   static void setContext(zmq::context_t* context);
 
-  // Set class socket address for ZeroMQ communication.
-  static void setAddress(std::string address);
+  // Socket sink address for ZeroMQ communication. This is the
+  // destination for all recorder instances. On the other end a receiver
+  // of the data shall listen and write it elsewhere.
+  static void setAddress(std::string const& address);
 
   // Get socket address.
   static std::string getAddress();
 
-  // Stop all operations.
+  // Stop all operations (by closing the socket).
   static void shutDown();
 
  protected:
   void flushSendBuffer();
 
+  // Sets up the recorder instance by sending data to the backend with
+  // "suitable" data. This data shall be used for sorting the source of
+  // future item data.
   void setupRecorder(int32_t max_size);
 
+  // Sets up each item to record. This enables the backend to predict
+  // the amount of different items possible.
   void setupItem(InitItem const& init);
 
+  // Send implementation that either append to the buffer or flushes it
+  // if necessary.
   void record(Item const& item);
 
   static zmq::context_t* socket_context;
   static std::string     socket_address;
 
-  // Local identifier for the recorder. This goes into the first frame
-  // of the zeromq message for the backend to use as filtering and
-  // sorting identification.
-  int64_t const external_id_;
+  // Local/internal identifer for the recorder. This goes into the first
+  // frame of the zeromq message for the backend to use for filtering
+  // and sorting identification. The recorder_id_ is a generated
+  // incremented internal number and can (should) be used as an array
+  // index by the backend.
   int16_t const recorder_id_;
+
+  // External id and a readable name for the recorder which are only
+  // sent in the setup message. The backend should map the internal id
+  // to the external.
+  int64_t const external_id_;
   std::string const recorder_name_;
 
  private:

@@ -32,7 +32,7 @@
 
 #define CHECK_POW2_SIZE(X)                                              \
   static_assert((((sizeof(X) << 1)-1) & sizeof(X)) == sizeof(X),        \
-                "Size of " #X " shall be power of 2");
+                "Size of " #X " shall be power of 2")
 
 // Item being passed around on the ZeroMQ-bus.
 // ----------------------------------------------------------------------------
@@ -40,9 +40,9 @@ enum class PayloadType {
   INIT_RECORDER, INIT_ITEM, DATA, };
 
 struct PACKED InitRecorder {
-  InitRecorder(int64_t ext_id,
-               int16_t rec_id,
+  InitRecorder(int16_t rec_id,
                int16_t num_items,
+               int64_t ext_id,
                std::string name)
       : external_id(ext_id)
       , recorder_id(rec_id)

@@ -24,6 +24,9 @@
 
 #include "RecorderBase.h"
 
+#include <unistd.h>
+#include <sys/syscall.h>
+
 #include <algorithm>
 #include <atomic>
 #include <cstdlib>
@@ -45,8 +48,7 @@ RecorderBase::setContext(zmq::context_t* context) {
 }
 
 void
-RecorderBase::setAddress(std::string address) {
-  printf("Address: %s\n", address.c_str());
+RecorderBase::setAddress(std::string const& address) {
   socket_address = address;
 }
 
@@ -73,13 +75,17 @@ namespace {
 void Error(char const* msg) { std::fprintf(stderr, "%s\n", msg); }
 std::atomic<int16_t> g_recorder_id = ATOMIC_VAR_INIT(0);
 
-// Socket creator class
+// Socket creator class, whose purpose is to safely create only a single
+// socket within each thread. It is statically declared in the ctor of
+// RecorderBase and "should" therefore guarantee only to be called once,
+// and to be initiated before any operations on the socket takes place.
 class SocketCreator {
  public:
   SocketCreator(zmq::context_t* ctx,
                 std::string const& address,
                 std::shared_ptr<zmq::socket_t>* socket) {
-    printf("%s: %lu\n", __func__, std::this_thread::get_id());
+    pid_t tid = syscall(SYS_gettid);
+    printf("%s: %d\n", __func__, tid);
     int constexpr linger = 3000;
     int constexpr sendtimeout = 2;
     int constexpr sendhwm = 16000;
@@ -94,14 +100,14 @@ class SocketCreator {
 }  // namespace
 
 
-RecorderBase::RecorderBase(std::string name, int32_t id)
-    : external_id_(id)
-    , recorder_id_(g_recorder_id.fetch_add(1))
+RecorderBase::RecorderBase(std::string const& name, int32_t id)
+    : recorder_id_(g_recorder_id.fetch_add(1))
+    , external_id_(id)
     , recorder_name_(name)
     , send_buffer_index(0) {
   bool error = false;
   if (RecorderBase::socket_context == nullptr) {
-    Error("setContext() must be called before instantiation");
+    Error("setContext() must be called before first instantiation");
     error = true;
   }
   if (RecorderBase::socket_address.empty()) {
@@ -139,7 +145,7 @@ void
 RecorderBase::setupRecorder(int32_t num_items) {
   auto constexpr frame = PayloadType::INIT_RECORDER;
   InitRecorder const init_rec(
-      external_id_, recorder_id_, num_items, recorder_name_);
+      recorder_id_, num_items, external_id_, recorder_name_);
   socket_->send(&frame, sizeof(frame), ZMQ_SNDMORE);
   socket_->send(&init_rec, sizeof(init_rec));
 }

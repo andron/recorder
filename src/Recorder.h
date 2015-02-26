@@ -72,7 +72,7 @@ class Recorder : public RecorderBase {
   Recorder(Recorder const&) = delete;
   Recorder& operator= (Recorder const&) = delete;
 
-  Recorder(std::string name, int32_t external_id = 0)
+  Recorder(std::string const& name, int32_t external_id = 0)
       : RecorderBase(name, external_id) {
     RecorderBase::setupRecorder(items_.max_size());
   }
@@ -83,7 +83,8 @@ class Recorder : public RecorderBase {
   // Setup parameter with key (name) and unit for recording. The unit is
   // a string which must be parsed at the receiving side. Calling setup
   // multiple times with the same key value will have no effect, once
-  // setup the key and unit will be locked.
+  // setup the key and unit will be locked. The description is for
+  // explaining the recorded data item, type, purpose etc.
   void setup(K const enumkey,
              std::string const& name,
              std::string const& desc = "N/A") {
@@ -119,7 +120,8 @@ class Recorder : public RecorderBase {
       // First record old value at current time
       item.time = time;
       RecorderBase::record(item);
-      // Then update value and record again at current time
+      // Then update value and record again at current time to get a
+      // "step" in the data.
       util::updateData(&item, value);
       RecorderBase::record(item);
     } else {
