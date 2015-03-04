@@ -135,7 +135,7 @@ main(int ac, char** av) {
   std::string addr = "inproc://recorder";
 
   // ----------------------------------------------------------------------
-  po::options_description opts("Options", 80, 120);
+  po::options_description opts("Options", 80, 75);
   opts.add_options()
       ("help,h", "Show help")
       ("verbose,v", "Be verbose")
@@ -144,10 +144,12 @@ main(int ac, char** av) {
        "Number of recording rounds")
       ("threads,t",
        po::value<int>(&num_rec_threads)->default_value(num_rec_threads),
-       "Number of recording threads")
+       "Number of recording threads. Producer threads that records 8 "
+       "different values per round.")
       ("context_io",
        po::value<int>(&num_ctx_threads)->default_value(num_ctx_threads),
-       "Number of ZMQ context io threads")
+       "Number of ZMQ context io threads. Defaults to one (1) and should "
+       "almost always be that.")
       ("address,a",
        po::value<std::string>(&addr)->default_value(addr),
        "Socket address");
