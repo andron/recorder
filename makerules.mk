@@ -20,7 +20,7 @@ _LDFLAGS  := \
 	-Wl,-rpath=$(TGTDIR) \
 	-Wl,-rpath=$(ZEROMQ_HOME)/lib
 
-TARGETS := recordertest servertest foo
+TARGETS := recordertest
 
 recordertest_SRCS := \
 	src/main_recorder.cpp \
@@ -30,11 +30,5 @@ recordertest_SRCS := \
 
 recordertest_USES := zeromq protobuf
 recordertest_LINK := zmq protobuf pthread boost_program_options
-
-servertest_SRCS := src/main_server.cpp
-servertest_USES := zeromq
-servertest_LINK := zmq pthread
-
-foo_SRCS := src/main_foo.cpp
 
 include $(FOOTER)
