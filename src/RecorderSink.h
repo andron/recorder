@@ -33,13 +33,13 @@ namespace zmq {
 class context_t;
 }
 
-class RecorderHDF5 : public RecorderBase {
+class RecorderSink : public RecorderBase {
  public:
-  RecorderHDF5(RecorderHDF5 const&) = delete;
-  RecorderHDF5& operator=(RecorderHDF5 const&) = delete;
+  RecorderSink(RecorderSink const&) = delete;
+  RecorderSink& operator=(RecorderSink const&) = delete;
 
-  RecorderHDF5();
-  ~RecorderHDF5();
+  RecorderSink();
+  ~RecorderSink();
 
   void start(bool verbose);
   void stop();

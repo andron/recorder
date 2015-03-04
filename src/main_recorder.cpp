@@ -24,7 +24,7 @@
 
 #include "Recorder.h"
 
-#include "RecorderHDF5.h"
+#include "RecorderSink.h"
 
 #include "zmqutils.h"
 
@@ -170,7 +170,7 @@ main(int ac, char** av) {
   printf("PID:       %d\n", getpid());
   printf("Item size: %lu\n", sizeof(Item));
 
-  RecorderHDF5 backend;
+  RecorderSink backend;
   backend.start(vm.count("verbose"));
 
   int const num_recorder_per_thread = 4;

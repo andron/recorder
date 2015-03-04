@@ -132,7 +132,7 @@ class Recorder : public RecorderBase {
   // For single values record calls.
   template<typename V>
   void record(K const enumkey, V const value, uint64_t time = 0) {
-    record(enumkey, {value}, time);
+    record(enumkey, {value, V(), V()}, time);
   }
 
  private:

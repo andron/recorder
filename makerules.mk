@@ -26,7 +26,7 @@ recordertest_SRCS := \
 	src/main_recorder.cpp \
 	src/RecorderBase.cpp \
 	src/RecorderTypes.cpp \
-	src/RecorderHDF5.cpp
+	src/RecorderSink.cpp
 
 recordertest_USES := zeromq protobuf
 recordertest_LINK := zmq protobuf pthread boost_program_options

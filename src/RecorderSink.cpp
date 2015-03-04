@@ -22,7 +22,7 @@
   THE SOFTWARE.
 */
 
-#include "RecorderHDF5.h"
+#include "RecorderSink.h"
 #include "RecorderBase.h"
 
 #include "zmqutils.h"
@@ -35,25 +35,25 @@
 typedef std::chrono::milliseconds msec;
 typedef std::chrono::microseconds usec;
 
-RecorderHDF5::RecorderHDF5()
-    : RecorderBase("HDF5Backend") {
+RecorderSink::RecorderSink()
+    : RecorderBase("Backend") {
 }
 
-RecorderHDF5::~RecorderHDF5() {
+RecorderSink::~RecorderSink() {
   if (poller_running_.load()) {
     stop();
   }
 }
 
 void
-RecorderHDF5::start(bool verbose) {
+RecorderSink::start(bool verbose) {
   verbose_mode_.store(verbose);
   poller_running_.store(true);
-  poller_thread_ = std::thread(&RecorderHDF5::run, this);
+  poller_thread_ = std::thread(&RecorderSink::run, this);
 }
 
 void
-RecorderHDF5::stop() {
+RecorderSink::stop() {
   poller_running_.store(false);
   if (poller_thread_.joinable()) {
     poller_thread_.join();
@@ -61,7 +61,7 @@ RecorderHDF5::stop() {
 }
 
 void
-RecorderHDF5::run() {
+RecorderSink::run() {
   zmq::socket_t sock(*RecorderBase::socket_context, ZMQ_PULL);
   int constexpr recvhvm = 16000;
   sock.setsockopt(ZMQ_RCVHWM, &recvhvm, sizeof(recvhvm));
