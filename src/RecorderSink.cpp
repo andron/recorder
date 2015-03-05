@@ -31,6 +31,8 @@
 
 #include <chrono>
 #include <map>
+#include <sstream>
+#include <string>
 
 typedef std::chrono::milliseconds msec;
 typedef std::chrono::microseconds usec;
@@ -63,10 +65,10 @@ RecorderSink::stop() {
 std::string
 itemToString(Item const& item) {
   char buf[64];
-  switch(item.type) {
+  switch (item.type) {
     case ItemType::INT: {
       int64_t const* d = item.data.v_i;
-      switch(item.length) {
+      switch (item.length) {
         case 1:
           snprintf(buf, sizeof(buf), "%ld", d[0]);
           break;;
@@ -80,7 +82,7 @@ itemToString(Item const& item) {
     } break;;
     case ItemType::UINT: {
       uint64_t const* d = item.data.v_u;
-      switch(item.length) {
+      switch (item.length) {
         case 1:
           snprintf(buf, sizeof(buf), "%lu", d[0]);
           break;;
@@ -94,7 +96,7 @@ itemToString(Item const& item) {
     } break;;
     case ItemType::FLOAT: {
       double const* d = item.data.v_d;
-      switch(item.length) {
+      switch (item.length) {
         case 1:
           snprintf(buf, sizeof(buf), "%f", d[0]);
           break;;
@@ -136,7 +138,7 @@ RecorderSink::run() {
 
     auto type = zmqutils::pop<PayloadType>(&sock, &zmsg);
 
-    switch(type) {
+    switch (type) {
       case PayloadType::DATA: {
         auto rcid = zmqutils::pop<int16_t>(&sock, &zmsg);
         sock.recv(&zmsg);

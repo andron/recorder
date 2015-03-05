@@ -29,10 +29,6 @@
 #include <atomic>
 #include <thread>
 
-namespace zmq {
-class context_t;
-}
-
 class RecorderSink : public RecorderBase {
  public:
   RecorderSink(RecorderSink const&) = delete;

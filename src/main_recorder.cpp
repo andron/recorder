@@ -54,7 +54,7 @@ enum class BER { A, B, C, D, E, X, Y, Z, Count };
 
 template<typename T>
 void
-funcSetupRecorder(Recorder<T>& rec, char const* prefix, int const id) {
+funcSetupRecorder(Recorder<T>* rec, char const* prefix, int const id) {
   char name[8][12];
 
   snprintf(name[0], sizeof(name[0]), "%s-chr%02d", prefix, id);
@@ -68,29 +68,29 @@ funcSetupRecorder(Recorder<T>& rec, char const* prefix, int const id) {
 
   // key[enum], name[string], type[enum], description[string], compare[pointer]
 
-  rec.setup(T::A, name[0], "m");
-  rec.setup(T::B, name[1], "s");
-  rec.setup(T::C, name[2], "C");
-  rec.setup(T::D, name[3], "u");
-  rec.setup(T::E, name[4], "g");
-  rec.setup(T::X, name[5], "-");
-  rec.setup(T::Y, name[6], "-");
-  rec.setup(T::Z, name[7], "-");
+  rec->setup(T::A, name[0], "m");
+  rec->setup(T::B, name[1], "s");
+  rec->setup(T::C, name[2], "C");
+  rec->setup(T::D, name[3], "u");
+  rec->setup(T::E, name[4], "g");
+  rec->setup(T::X, name[5], "-");
+  rec->setup(T::Y, name[6], "-");
+  rec->setup(T::Z, name[7], "-");
 }
 
 template<typename T>
 void
-funcRecordRecorder(Recorder<T>& rec, int x) {
+funcRecordRecorder(Recorder<T>* rec, int x) {
   float  data1[3] = {500.0f*x, 600.0f*x, 700.0f*x};
   double data2[3] = {500.0*x, 600.0*x, 700.0*x};
-  rec.record(T::A, *reinterpret_cast<char*>(&x), x);
-  rec.record(T::B, std::log(2+x), x);
-  rec.record(T::C, reinterpret_cast<int32_t>(-1), x);
-  rec.record(T::D, static_cast<int64_t>(-2+x), x);
-  rec.record(T::E, static_cast<uint64_t>(2*(1+x)), x);
-  rec.record(T::X, data1, x);
-  rec.record(T::Y, data2, x);
-  rec.record(T::Z, {10*(1+x), 20*(1+x)}, x);
+  rec->record(T::A, *reinterpret_cast<char*>(&x), x);
+  rec->record(T::B, std::log(2+x), x);
+  rec->record(T::C, reinterpret_cast<int32_t>(-1), x);
+  rec->record(T::D, static_cast<int64_t>(-2+x), x);
+  rec->record(T::E, static_cast<uint64_t>(2*(1+x)), x);
+  rec->record(T::X, data1, x);
+  rec->record(T::Y, data2, x);
+  rec->record(T::Z, {10*(1+x), 20*(1+x)}, x);
 }
 
 
@@ -101,7 +101,7 @@ void funcProducer(int const id, int const num_rounds) {
   prefix = "FOO";
   snprintf(recorder_name, sizeof(recorder_name), "%s%02d", prefix.c_str() , id);
   Recorder<FOO> recfoo(recorder_name, random() % (1<<16));
-  funcSetupRecorder(recfoo, prefix.c_str(), id);
+  funcSetupRecorder(&recfoo, prefix.c_str(), id);
 
   //prefix = "BAR";
   //snprintf(recorder_name, sizeof(recorder_name), "%s%02d", prefix.c_str() , id);
@@ -110,8 +110,7 @@ void funcProducer(int const id, int const num_rounds) {
 
   for (int j = 0; j < num_rounds; ++j) {
     std::this_thread::sleep_for(nsec(1));
-    funcRecordRecorder(recfoo, j);
-    //funcRecordRecorder(recbar, j);
+    funcRecordRecorder(&recfoo, j);
   }
 }
 
