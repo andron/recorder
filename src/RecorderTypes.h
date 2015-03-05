@@ -83,7 +83,7 @@ struct PACKED Item {
     uint64_t u;
     double   d;
     int64_t  v_i[3];
-    int64_t  v_u[3];
+    uint64_t v_u[3];
     double   v_d[3];
   } data;
 };
