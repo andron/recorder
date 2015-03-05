@@ -31,7 +31,6 @@
 
 #include <chrono>
 #include <map>
-#include <sstream>
 #include <string>
 
 typedef std::chrono::milliseconds msec;
@@ -60,58 +59,6 @@ RecorderSink::stop() {
   if (poller_thread_.joinable()) {
     poller_thread_.join();
   }
-}
-
-std::string
-itemToString(Item const& item) {
-  char buf[64];
-  switch (item.type) {
-    case ItemType::INT: {
-      int64_t const* d = item.data.v_i;
-      switch (item.length) {
-        case 1:
-          snprintf(buf, sizeof(buf), "%ld", d[0]);
-          break;;
-        case 2:
-          snprintf(buf, sizeof(buf), "%ld,%ld", d[0], d[1]);
-          break;;
-        case 3:
-          snprintf(buf, sizeof(buf), "%ld,%ld,%ld", d[0], d[1], d[2]);
-          break;;
-      }
-    } break;;
-    case ItemType::UINT: {
-      uint64_t const* d = item.data.v_u;
-      switch (item.length) {
-        case 1:
-          snprintf(buf, sizeof(buf), "%lu", d[0]);
-          break;;
-        case 2:
-          snprintf(buf, sizeof(buf), "%lu,%lu", d[0], d[1]);
-          break;;
-        case 3:
-          snprintf(buf, sizeof(buf), "%lu,%lu,%lu", d[0], d[1], d[2]);
-          break;;
-      }
-    } break;;
-    case ItemType::FLOAT: {
-      double const* d = item.data.v_d;
-      switch (item.length) {
-        case 1:
-          snprintf(buf, sizeof(buf), "%f", d[0]);
-          break;;
-        case 2:
-          snprintf(buf, sizeof(buf), "%f,%f", d[0], d[1]);
-          break;;
-        case 3:
-          snprintf(buf, sizeof(buf), "%f,%f,%f", d[0], d[1], d[2]);
-          break;;
-      }
-    } break;;
-    default:
-      break;;
-  }
-  return std::string(buf);
 }
 
 void
@@ -148,14 +95,13 @@ RecorderSink::run() {
         if (verbose_mode_.load()) {
           for (size_t i = 0; i < num_params; ++i) {
             auto const* item = static_cast<Item*>(zmsg.data()) + i;
-            auto const str = itemToString(*item);
             printf("(DATA): @%03d %6d-%d T%d L%d -- %s\n",
                    item->time,
                    rcid,
                    item->key,
                    item->type,
                    item->length,
-                   str.c_str());
+                   item->str().c_str());
           }
         }
       } break;;

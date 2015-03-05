@@ -24,8 +24,9 @@
 
 #include "RecorderTypes.h"
 
-#include <string>
 #include <cstdio>
+#include <sstream>
+#include <string>
 
 InitItem::InitItem(int16_t item_recorder_id,
                    int16_t item_key,
@@ -49,4 +50,39 @@ Item::Item(int8_t item_key)
     : Item() {
   key = item_key;
   type = ItemType::INIT;
+}
+
+std::string Item::str() const {
+  std::string str;
+  str.reserve(64);
+  std::stringstream ss(str);
+  switch (this->type) {
+    case ItemType::INT: {
+      int64_t const* d = this->data.v_i;
+      switch (this->length) {
+        case 1: ss << d[0]; break;;
+        case 2: ss << d[0] << "," << d[1]; break;;
+        case 3: ss << d[0] << "," << d[1] << "," << d[2]; break;;
+      }
+    } break;;
+    case ItemType::UINT: {
+      uint64_t const* d = this->data.v_u;
+      switch (this->length) {
+        case 1: ss << d[0]; break;;
+        case 2: ss << d[0] << "," << d[1]; break;;
+        case 3: ss << d[0] << "," << d[1] << "," << d[2]; break;;
+      }
+    } break;;
+    case ItemType::FLOAT: {
+      double const* d = this->data.v_d;
+      switch (this->length) {
+        case 1: ss << d[0]; break;;
+        case 2: ss << d[0] << "," << d[1]; break;;
+        case 3: ss << d[0] << "," << d[1] << "," << d[2]; break;;
+      }
+    } break;;
+    default:
+      break;;
+  }
+  return ss.str();
 }

@@ -74,6 +74,8 @@ struct PACKED Item {
   Item();
   explicit Item(int8_t key);
 
+  std::string str() const;
+
   int32_t  time;
   int16_t  key;
   ItemType type;

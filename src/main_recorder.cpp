@@ -81,8 +81,8 @@ funcSetupRecorder(Recorder<T>* rec, char const* prefix, int const id) {
 template<typename T>
 void
 funcRecordRecorder(Recorder<T>* rec, int x) {
-  float  data1[3] = {500.0f*x, 600.0f*x, 700.0f*x};
-  double data2[3] = {500.0*x, 600.0*x, 700.0*x};
+  float  data1[3] = {500.111111111f*x, 600.0f*x, 700.0f*x};
+  double data2[3] = {500.222222222*x, 600.0*x, 700.0*x};
   rec->record(T::A, *reinterpret_cast<char*>(&x), x);
   rec->record(T::B, std::log(2+x), x);
   rec->record(T::C, reinterpret_cast<int32_t>(-1), x);
