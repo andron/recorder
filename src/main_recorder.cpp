@@ -84,13 +84,13 @@ funcRecordRecorder(Recorder<T>& rec, int x) {
   float  data1[3] = {500.0f*x, 600.0f*x, 700.0f*x};
   double data2[3] = {500.0*x, 600.0*x, 700.0*x};
   rec.record(T::A, *reinterpret_cast<char*>(&x), x);
-  rec.record(T::B, std::log(1+x), x);
-  rec.record(T::C, reinterpret_cast<int32_t>(-x*x), x);
-  rec.record(T::D, static_cast<int64_t>(-x*x), x);
-  rec.record(T::E, static_cast<uint64_t>(x*x), x);
+  rec.record(T::B, std::log(2+x), x);
+  rec.record(T::C, reinterpret_cast<int32_t>(-1), x);
+  rec.record(T::D, static_cast<int64_t>(-2+x), x);
+  rec.record(T::E, static_cast<uint64_t>(2*(1+x)), x);
   rec.record(T::X, data1, x);
   rec.record(T::Y, data2, x);
-  rec.record(T::Z, {10*x, 20*x}, x);
+  rec.record(T::Z, {10*(1+x), 20*(1+x)}, x);
 }
 
 
@@ -103,27 +103,15 @@ void funcProducer(int const id, int const num_rounds) {
   Recorder<FOO> recfoo(recorder_name, random() % (1<<16));
   funcSetupRecorder(recfoo, prefix.c_str(), id);
 
-  prefix = "BAR";
-  snprintf(recorder_name, sizeof(recorder_name), "%s%02d", prefix.c_str() , id);
-  Recorder<BAR> recbar(recorder_name, random() % (1<<16));
-  funcSetupRecorder(recbar, prefix.c_str(), id);
-
-  prefix = "FUU";
-  snprintf(recorder_name, sizeof(recorder_name), "%s%02d", prefix.c_str() , id);
-  Recorder<FUU> recfuu(recorder_name, random() % (1<<16));
-  funcSetupRecorder(recfuu, prefix.c_str(), id);
-
-  prefix = "BER";
-  snprintf(recorder_name, sizeof(recorder_name), "%s%02d", prefix.c_str() , id);
-  Recorder<BER> recber(recorder_name, random() % (1<<16));
-  funcSetupRecorder(recber, prefix.c_str(), id);
+  //prefix = "BAR";
+  //snprintf(recorder_name, sizeof(recorder_name), "%s%02d", prefix.c_str() , id);
+  //Recorder<BAR> recbar(recorder_name, random() % (1<<16));
+  //funcSetupRecorder(recbar, prefix.c_str(), id);
 
   for (int j = 0; j < num_rounds; ++j) {
-    //std::this_thread::sleep_for(nsec(10));
+    std::this_thread::sleep_for(nsec(1));
     funcRecordRecorder(recfoo, j);
-    funcRecordRecorder(recbar, j);
-    funcRecordRecorder(recfuu, j);
-    funcRecordRecorder(recber, j);
+    //funcRecordRecorder(recbar, j);
   }
 }
 
@@ -175,7 +163,7 @@ main(int ac, char** av) {
   RecorderSink backend;
   backend.start(vm.count("verbose"));
 
-  int const num_recorder_per_thread = 4;
+  int const num_recorder_per_thread = 2;
   int const num_messages_per_recorder = 8;
 
   // Each item recording generates two messages per round except for the
