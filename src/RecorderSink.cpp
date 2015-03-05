@@ -137,10 +137,13 @@ RecorderSink::run() {
          count * 1000 / duration_msec,
          sizeof(Item) * count * 1000 / (mib * duration_msec));
 
+  int total = 0;
   for (size_t i = 0; i < counter.max_size(); ++i) {
     if (counter[i] == 0) {
       continue;
     }
     printf("(RECV): %2lu:%d\n", i, counter[i]);
+    total += counter[i];
   }
+  printf("(RECV): %d\n", total);
 }
