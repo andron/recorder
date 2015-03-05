@@ -121,7 +121,7 @@ class Recorder : public RecorderBase {
       item.time = time;
       RecorderBase::record(item);
       // Then update value and record again at current time to get a
-      // "step" in the data.
+      // "step" in the data. Items are sent "in order" to the receiver.
       util::updateData(&item, value);
       RecorderBase::record(item);
     } else {
