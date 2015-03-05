@@ -60,6 +60,58 @@ RecorderSink::stop() {
   }
 }
 
+std::string
+itemToString(Item const& item) {
+  char buf[64];
+  switch(item.type) {
+    case ItemType::INT: {
+      int64_t const* d = item.data.v_i;
+      switch(item.length) {
+        case 1:
+          snprintf(buf, sizeof(buf), "%ld", d[0]);
+          break;;
+        case 2:
+          snprintf(buf, sizeof(buf), "%ld,%ld", d[0], d[1]);
+          break;;
+        case 3:
+          snprintf(buf, sizeof(buf), "%ld,%ld,%ld", d[0], d[1], d[2]);
+          break;;
+      }
+    } break;;
+    case ItemType::UINT: {
+      uint64_t const* d = item.data.v_u;
+      switch(item.length) {
+        case 1:
+          snprintf(buf, sizeof(buf), "%lu", d[0]);
+          break;;
+        case 2:
+          snprintf(buf, sizeof(buf), "%lu,%lu", d[0], d[1]);
+          break;;
+        case 3:
+          snprintf(buf, sizeof(buf), "%lu,%lu,%lu", d[0], d[1], d[2]);
+          break;;
+      }
+    } break;;
+    case ItemType::FLOAT: {
+      double const* d = item.data.v_d;
+      switch(item.length) {
+        case 1:
+          snprintf(buf, sizeof(buf), "%f", d[0]);
+          break;;
+        case 2:
+          snprintf(buf, sizeof(buf), "%f,%f", d[0], d[1]);
+          break;;
+        case 3:
+          snprintf(buf, sizeof(buf), "%f,%f,%f", d[0], d[1], d[2]);
+          break;;
+      }
+    } break;;
+    default:
+      break;;
+  }
+  return std::string(buf);
+}
+
 void
 RecorderSink::run() {
   zmq::socket_t sock(*RecorderBase::socket_context, ZMQ_PULL);
@@ -84,22 +136,31 @@ RecorderSink::run() {
 
     auto type = zmqutils::pop<PayloadType>(&sock, &zmsg);
 
-    switch (type) {
+    switch(type) {
       case PayloadType::DATA: {
         auto rcid = zmqutils::pop<int16_t>(&sock, &zmsg);
         sock.recv(&zmsg);
         auto const num_params = zmsg.size() / sizeof(Item);
         count += num_params;
         counter[rcid] += num_params;
-        //for (size_t i = 0; i < num_params; ++i) {
-        //  auto* item = static_cast<Item*>(zmsg.data()) + i;
-        //  int32_t length = item->length;
-        //}
+        if (verbose_mode_.load()) {
+          for (size_t i = 0; i < num_params; ++i) {
+            auto const* item = static_cast<Item*>(zmsg.data()) + i;
+            auto const str = itemToString(*item);
+            printf("(DATA): @%03d %6d-%d T%d L%d -- %s\n",
+                   item->time,
+                   rcid,
+                   item->key,
+                   item->type,
+                   item->length,
+                   str.c_str());
+          }
+        }
       } break;;
       case PayloadType::INIT_ITEM: {
         auto init = zmqutils::pop<InitItem>(&sock, &zmsg);
         if (verbose_mode_.load()) {
-          printf("(ITEM): %4d-%d '%s' '%s'\n",
+          printf("(ITEM): %6d-%d '%s' '%s'\n",
                  init.recorder_id,
                  init.key,
                  init.name,
